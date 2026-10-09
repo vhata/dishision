@@ -16,6 +16,9 @@ explanation.
     pnpm test            # core (node), worker (workerd) and client (jsdom) tests
     pnpm typecheck
 
+    bash scripts/setup.sh   # install dependencies and the git hooks (once per clone)
+    bash scripts/check.sh   # the gates CI runs: typecheck, then tests
+
 Phase 1 runs entirely on fixture data: a dozen San Francisco restaurants in
 `fixtures/sf.ts`. Any five-digit ZIP works. Real discovery and menu ingestion
 arrive in the next plan.
@@ -43,6 +46,10 @@ keyword fallback; an LLM provider slots in behind the same interface later.
 - `src/client/`: React SPA.
 - `src/providers/`: seams for restaurants, menus, geocoding and the LLM, with fixture implementations.
 - `docs/superpowers/specs/`: design. `docs/superpowers/plans/`: implementation plans.
+
+## Working on it
+
+Agents and contributors follow [AGENTS.md](AGENTS.md): one branch, worktree and PR per unit of work, deferred work in [TODO.md](TODO.md), gates in [docs/QUALITY.md](docs/QUALITY.md), structure and invariants in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Manual checklist
 
