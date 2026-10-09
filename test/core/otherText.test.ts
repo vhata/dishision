@@ -61,3 +61,14 @@ describe('applyPatch', () => {
     expect(prefs.budget.max).toBe(25);
   });
 });
+
+describe('keywordParse on the avoid question', () => {
+  it('reads bare cuisines and proteins as exclusions', () => {
+    const p = keywordParse('sushi, and chinese', { intent: 'avoid' });
+    expect(p.exclusions).toEqual(expect.arrayContaining(['japanese', 'chinese']));
+    expect(p.cuisines).toBeUndefined();
+    const q = keywordParse('pork', { intent: 'avoid' });
+    expect(q.exclusions).toContain('pork');
+    expect(q.proteins).toBeUndefined();
+  });
+});

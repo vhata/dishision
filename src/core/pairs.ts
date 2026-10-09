@@ -4,6 +4,9 @@ import type { DinnerPreferences, Hunger } from './preferences';
 import { scoreItem, WEIGHTS, type ScoredItem, type ScoreTrace, type ScoringContext } from './scoring';
 import type { MenuItem, RestaurantSummary, ScoreKey, Scores } from './types';
 
+/** Items with a smaller portion than this are sides: they may partner a main but never stand alone. */
+export const SIDE_PORTION = 0.35;
+
 export const PAIR = {
   topPerRestaurant: 4,
   margin: 0.05,
@@ -59,7 +62,8 @@ export function composePair(a: ScoredItem, b: ScoredItem, prefs: DinnerPreferenc
   const total = (a.item.priceCents ?? 0) + (b.item.priceCents ?? 0);
   if (prefs.budget.max !== undefined && !prefs.budget.flexible && total > prefs.budget.max * 100) return null;
 
-  const coverage = alignQualities(desiredVector(prefs), combineScores(a.item.scores, b.item.scores));
+  const desired = desiredVector(prefs);
+  const coverage = alignQualities(desired, combineScores(a.item.scores, b.item.scores));
   // Coverage rewards complementary dishes; averaging in each dish's own alignment stops a weak partner riding along for free.
   const ownA = (a.trace.components.qualities ?? 0) / WEIGHTS.qualities;
   const ownB = (b.trace.components.qualities ?? 0) / WEIGHTS.qualities;
@@ -85,7 +89,7 @@ export function composePair(a: ScoredItem, b: ScoredItem, prefs: DinnerPreferenc
   if (portion > PAIR.portionCap[prefs.hunger ?? 'normal']) penalties.tooMuch = PAIR.tooMuch;
 
   const positiveSignals: Record<string, number> = {};
-  for (const [key, met] of Object.entries(coverage.signals)) if (met >= 0.6) positiveSignals[key] = met;
+  for (const [key, met] of Object.entries(coverage.signals)) if (met >= 0.6 && (desired[key] ?? 0) > 0) positiveSignals[key] = met;
   const protein = Math.max(a.trace.positiveSignals.protein ?? 0, b.trace.positiveSignals.protein ?? 0);
   if (protein > 0) positiveSignals.protein = protein;
 
@@ -107,7 +111,7 @@ export function rankCandidates(candidates: RestaurantCandidatesInput[], prefs: D
       .map((item) => scoreItem(item, restaurant, prefs, ctx))
       .filter((s): s is ScoredItem => s !== null)
       .sort((x, y) => y.score - x.score);
-    for (const s of scored) recs.push(single(s));
+    for (const s of scored) if ((s.item.scores.portion ?? 0.6) >= SIDE_PORTION) recs.push(single(s));
     const top = scored.filter((s) => !s.item.menuless).slice(0, PAIR.topPerRestaurant);
     for (let i = 0; i < top.length; i++) {
       for (let j = i + 1; j < top.length; j++) {

@@ -85,3 +85,32 @@ describe('POST /api/session/:id/feedback', () => {
     expect((await post(`/api/session/${id}/feedback`, { reason: 'another' })).status).toBe(409);
   });
 });
+
+describe('feedback details', () => {
+  it('carries the shown dish archetype and cuisine into had_recently', async () => {
+    const id = await readySession();
+    const first = (await post<RecommendResponse>(`/api/session/${id}/recommend`, {})).body;
+    const shown = first.primary!.items[0]!;
+    expect(shown.archetypeId).toBeTruthy();
+    const res = await post<RecommendResponse>(`/api/session/${id}/feedback?debug=1`, { reason: 'had_recently' });
+    expect(res.status).toBe(200);
+    const session = (await SELF.fetch(`http://example.com/api/session/${id}?debug=1`).then((r) => r.json())) as SessionDto;
+    expect(session.debug?.prefs.recentMeals).toContain(shown.archetypeId);
+    expect(session.debug?.prefs.recentMeals).toContain(first.primary!.restaurant.cuisine);
+  });
+
+  it('refuses further feedback once candidates are exhausted instead of mutating preferences again', async () => {
+    const id = await readySession(['japanese', 'chinese', 'thai', 'vietnamese', 'korean', 'indian', 'mexican', 'italian', 'middle_eastern']);
+    let res = await post<RecommendResponse>(`/api/session/${id}/recommend`, {});
+    expect(res.body.primary).not.toBeNull();
+    let rounds = 0;
+    while (res.body.primary && rounds < 20) {
+      res = await post<RecommendResponse>(`/api/session/${id}/feedback`, { reason: 'another' });
+      rounds++;
+    }
+    expect(res.status).toBe(200);
+    expect(res.body.primary).toBeNull();
+    const again = await post<RecommendResponse>(`/api/session/${id}/feedback`, { reason: 'too_heavy' });
+    expect(again.status).toBe(409);
+  });
+});

@@ -53,6 +53,8 @@ export const NodeSchema = z
     yes: z.array(EffectSchema).optional(),
     no: z.array(EffectSchema).optional(),
     allowMissingOption: z.boolean().default(false),
+    /** How free text on this node should be read; 'avoid' turns bare mentions into exclusions. */
+    otherIntent: z.enum(['avoid']).optional(),
   })
   .refine((n) => n.kind !== 'scale' || (n.field && n.stops), { message: 'scale nodes need field and stops' })
   .refine((n) => n.kind !== 'yesno' || (n.yes && n.no), { message: 'yesno nodes need yes and no effects' })

@@ -45,6 +45,8 @@ export function tagItem(kb: KnowledgeBase, item: { name: string; description?: s
     archetypeId ??= entry.archetypeId;
   }
 
+  if (proteins.has('vegetarian') && ['beef', 'chicken', 'pork', 'seafood'].some((p) => proteins.has(p))) proteins.delete('vegetarian');
+
   if (carbs.size > 0 && scores.carbHeavy === undefined) scores.carbHeavy = 0.6;
   if (carbs.size === 0 && scores.carbHeavy === undefined && hits.length > 0) scores.carbHeavy = 0.2;
 

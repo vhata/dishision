@@ -13,7 +13,7 @@ function toDto(rec: Recommendation, explanation: string, debug: boolean): Recomm
   return {
     kind: rec.kind,
     restaurant: rec.restaurant,
-    items: rec.items.map((i) => ({ id: i.id, name: i.name, description: i.description, priceCents: i.priceCents, menuless: i.menuless })),
+    items: rec.items.map((i) => ({ id: i.id, name: i.name, description: i.description, priceCents: i.priceCents, menuless: i.menuless, archetypeId: i.tags.archetypeId, cuisine: i.tags.cuisine })),
     score: rec.score,
     explanation,
     menuless: rec.menuless,

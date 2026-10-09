@@ -104,3 +104,12 @@ describe('restaurantQuality and similarity', () => {
     expect(similarity({ brothy: 1 }, { rich: 1 })).toBe(0.5);
   });
 });
+
+describe('positive signals and avoided qualities', () => {
+  it('never records an avoided quality as a positive signal', () => {
+    const prefs = applyEffects(emptyPreferences(), [{ path: 'novelty', value: -1 }, { path: 'desiredQualities.spicy', value: -1 }]);
+    const r = scoreItem(burger, burgerBarn, prefs, ctx)!;
+    expect(r.trace.positiveSignals.adventurous).toBeUndefined();
+    expect(r.trace.positiveSignals.spicy).toBeUndefined();
+  });
+});

@@ -82,7 +82,7 @@ sessionRoutes.post('/:id/answer', async (c) => {
 
   let lastOtherParse: SessionDebug['lastOtherParse'];
   if (answer.otherText && answer.otherText.trim()) {
-    const parse = await parseOther(llm, answer.otherText, node?.prompt ?? '');
+    const parse = await parseOther(llm, answer.otherText, node?.prompt ?? '', node?.otherIntent);
     state = { ...state, prefs: applyOther(state.prefs, answer.otherText, parse) };
     lastOtherParse = { source: parse.source, patch: parse.patch };
   }
@@ -125,13 +125,17 @@ sessionRoutes.post('/:id/feedback', async (c) => {
   if (!parsed.success) return c.json(invalid(parsed.error.issues), 400);
   const latest = await latestRecommendation(c.env.DB, rec.id);
   if (!latest) return c.json({ error: 'nothing_to_reject', message: 'Ask for a recommendation first.' }, 409);
+  if (latest.feedbackReason) {
+    return c.json({ error: 'no_more_options', message: 'Nothing else fits. Loosen a restriction or start over.' }, 409);
+  }
 
   await setFeedback(c.env.DB, latest.id, parsed.data.reason);
   const shown = latest.payload.primary;
   const shownIds = shown.items.map((i) => i.id);
   const totalPriceCents = shown.items.reduce((n, i) => n + (i.priceCents ?? 0), 0) || undefined;
-  const archetypeId = c.get('deps').kb.archetypes.find((a) => shown.items.some((i) => i.id.includes(a.id)))?.id;
-  const prefs = applyFeedback(rec.state.prefs, parsed.data.reason, { cuisine: shown.restaurant.cuisine, archetypeId, totalPriceCents });
+  const archetypeId = shown.items[0]?.archetypeId;
+  const cuisine = shown.items[0]?.cuisine ?? shown.restaurant.cuisine;
+  const prefs = applyFeedback(rec.state.prefs, parsed.data.reason, { cuisine, archetypeId, totalPriceCents });
   const updated: SessionRecord = {
     ...rec,
     state: { ...rec.state, prefs, rejectedItemIds: [...new Set([...rec.state.rejectedItemIds, ...shownIds])] },

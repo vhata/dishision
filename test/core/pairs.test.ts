@@ -127,3 +127,22 @@ describe('withMenulessFallback', () => {
     expect(withMenulessFallback(kb, [{ restaurant: mystery, items: [] }], emptyPreferences())[0]!.items).toEqual([]);
   });
 });
+
+describe('side dishes', () => {
+  const fries: MenuItem = {
+    id: 'fries', placeId: 'siam', name: 'Fries', priceCents: 500,
+    scores: { crispy: 0.9, rich: 0.6, carbHeavy: 0.9, portion: 0.3 },
+    tags: { proteins: ['vegetarian'], carbs: [], cuisine: 'thai', formats: ['side'] },
+  };
+  it('never stands a small side up as the recommendation', () => {
+    const tight = applyEffects(emptyPreferences(), [{ path: 'budget.max', value: 10 }]);
+    const { primary } = recommend([{ restaurant: siam, items: [fries, tomYum, beefSalad] }], tight, ctx);
+    expect(primary).toBeNull();
+  });
+  it('still lets a small side partner a main dish', () => {
+    const prefs = applyEffects(emptyPreferences(), [{ path: 'desiredQualities.crispy', value: 1 }, { path: 'desiredQualities.brothy', value: 1 }]);
+    const { ranked } = recommend([{ restaurant: siam, items: [fries, tomYum] }], prefs, ctx);
+    expect(ranked.some((r) => r.kind === 'pair' && r.items.some((i) => i.id === 'fries'))).toBe(true);
+    expect(ranked.some((r) => r.kind === 'single' && r.items[0]!.id === 'fries')).toBe(false);
+  });
+});

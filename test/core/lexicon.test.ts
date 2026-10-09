@@ -48,3 +48,11 @@ describe('tagItem', () => {
     expect(r.scores.brothy).toBeGreaterThanOrEqual(0.9);
   });
 });
+
+describe('vegetarian tagging', () => {
+  it('does not call a dish vegetarian when it names meat or seafood', () => {
+    expect(tagItem(kb, { name: 'Mapo Tofu', description: 'Silken tofu and minced pork in chili bean sauce' }).tags.proteins).not.toContain('vegetarian');
+    expect(tagItem(kb, { name: 'Tom Yum Shrimp', description: 'Hot and sour soup with mushrooms' }).tags.proteins).not.toContain('vegetarian');
+    expect(tagItem(kb, { name: 'Chana Masala', description: 'Chickpeas in tomato gravy' }).tags.proteins).toContain('vegetarian');
+  });
+});

@@ -94,3 +94,16 @@ describe('suggestions', () => {
     expect((await post(`/api/session/${s.id}/suggest`, { nodeId: 'avoid', text: 'x' })).status).toBe(400);
   });
 });
+
+describe('Other text on the avoid question', () => {
+  it('treats a bare cuisine as an exclusion', async () => {
+    const s = await create();
+    await answer(s.id, { kind: 'single', nodeId: 'hunger', optionId: 'normal' });
+    await answer(s.id, { kind: 'multi', nodeId: 'feel', selections: [] });
+    await answer(s.id, { kind: 'multi', nodeId: 'protein', selections: [] });
+    await answer(s.id, { kind: 'scale', nodeId: 'novelty', stop: 2 });
+    const cur = await answer(s.id, { kind: 'multi', nodeId: 'avoid', selections: [], otherText: 'chinese' });
+    expect(cur.debug?.prefs.exclusions).toContain('chinese');
+    expect(cur.debug?.prefs.cuisines.chinese).toBeUndefined();
+  });
+});

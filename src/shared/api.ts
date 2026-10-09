@@ -47,6 +47,8 @@ export interface MenuItemDto {
   description?: string;
   priceCents?: number;
   menuless?: boolean;
+  archetypeId?: string;
+  cuisine?: string;
 }
 
 export interface OrderLinks {

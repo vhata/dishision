@@ -27,13 +27,13 @@ export function otherCacheKey(text: string): string {
   return `other:v${OTHER_PROMPT_VERSION}:${text.trim().toLowerCase().replace(/\s+/g, ' ')}`;
 }
 
-export function buildOtherPrompt(text: string, nodePrompt: string): { system: string; prompt: string } {
+export function buildOtherPrompt(text: string, nodePrompt: string, intent?: OtherIntent): { system: string; prompt: string } {
   return {
     system:
       "You convert a diner's free-text remark into a JSON preference patch. Only fill fields the text clearly supports. " +
       'Numbers run from -1 (avoid) to 1 (want). Negations become exclusions, never positive preferences. ' +
       'Dishes eaten recently go in recentMeals; meals planned soon go in futureMeals. Output JSON only.',
-    prompt: `Question being answered: "${nodePrompt}"\nDiner wrote: "${text}"`,
+    prompt: `Question being answered: "${nodePrompt}"${intent === 'avoid' ? ' (the diner is listing things they do NOT want; bare mentions are exclusions)' : ''}\nDiner wrote: "${text}"`,
   };
 }
 
@@ -67,7 +67,14 @@ function push(list: string[], value: string): void {
   if (v && !list.includes(v)) list.push(v);
 }
 
-export function keywordParse(text: string): PreferencePatch {
+export type OtherIntent = 'avoid';
+
+export interface KeywordParseOptions {
+  /** On the avoid question a bare "sushi" means do not want sushi. */
+  intent?: OtherIntent;
+}
+
+export function keywordParse(text: string, opts: KeywordParseOptions = {}): PreferencePatch {
   const patch: PreferencePatch = {};
   const dq = (): Record<string, number> => (patch.desiredQualities ??= {});
   const proteins = (): Record<string, number> => (patch.proteins ??= {});
@@ -100,7 +107,7 @@ export function keywordParse(text: string): PreferencePatch {
   for (const rawClause of working.split(/[,.;!?]| but | and | though /)) {
     const clause = rawClause.trim();
     if (!clause) continue;
-    const negated = NEGATION.test(clause);
+    const negated = opts.intent === 'avoid' || NEGATION.test(clause);
     const sign = negated ? -1 : 1;
 
     for (const [word, key] of Object.entries(CUISINE_WORDS)) {

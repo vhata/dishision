@@ -98,3 +98,35 @@ describe('degenerate inputs', () => {
     expect(primary).toBeNull();
   });
 });
+
+describe('review fixes', () => {
+  it('explanations never claim a quality the diner asked to avoid', () => {
+    const { primary, runnerUp, prefs } = run([
+      { path: 'hunger', value: 'very_hungry' },
+      { path: 'desiredQualities.rich', value: 1 },
+      { path: 'handheld', value: 1 },
+      { path: 'proteins.beef', value: 1 },
+      { path: 'novelty', value: -1 },
+      { path: 'desiredQualities.spicy', value: -1 },
+    ]);
+    const text = explain(primary!, prefs, runnerUp);
+    expect(text).not.toMatch(/something a bit different/);
+    expect(text).not.toMatch(/You get[^.]*some heat/);
+  });
+
+  it('a vegetarian pick never gets a meat or seafood dish', () => {
+    const { primary, runnerUp } = run([{ path: 'proteins.vegetarian', value: 1 }]);
+    for (const rec of [primary!, runnerUp!]) {
+      for (const item of rec.items) {
+        expect(item.tags.proteins, item.name).toContain('vegetarian');
+        expect(item.tags.proteins.filter((p) => p !== 'vegetarian'), item.name).toEqual([]);
+      }
+    }
+  });
+
+  it('tightening the budget never makes a side dish the dinner', () => {
+    const base = applyEffects(emptyPreferences(), [{ path: 'hunger', value: 'normal' }, { path: 'budget.max', value: 12 }]);
+    const { primary } = recommend(withMenulessFallback(kb, candidates, base), base, { kb });
+    if (primary) for (const item of primary.items) expect(item.scores.portion ?? 1, item.name).toBeGreaterThanOrEqual(0.35);
+  });
+});

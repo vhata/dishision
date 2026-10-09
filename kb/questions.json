@@ -44,6 +44,7 @@
     "prompt": "Anything you don't want tonight?",
     "help": "Cuisines to skip. Anything else, use Other.",
     "allowMissingOption": true,
+    "otherIntent": "avoid",
     "options": [
       { "id": "japanese", "label": "Japanese", "effects": [{ "path": "exclusions", "value": "japanese" }] },
       { "id": "chinese", "label": "Chinese", "effects": [{ "path": "exclusions", "value": "chinese" }] },

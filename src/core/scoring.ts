@@ -95,7 +95,8 @@ export function scoreItem(item: MenuItem, restaurant: RestaurantSummary, prefs: 
   const penalties: Record<string, number> = {};
 
   components.qualities = WEIGHTS.qualities * align.score;
-  for (const [key, met] of Object.entries(align.signals)) if (met >= 0.6) positiveSignals[key] = met;
+  // Only wanted qualities become positive signals; avoided ones are reported through the explanation's avoided phrases.
+  for (const [key, met] of Object.entries(align.signals)) if (met >= 0.6 && (desired[key] ?? 0) > 0) positiveSignals[key] = met;
 
   const protein = proteinMatch(prefs, item.tags.proteins);
   components.protein = WEIGHTS.protein * (protein ?? 0.5);
