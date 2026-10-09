@@ -16,8 +16,8 @@ explanation.
     pnpm test            # core (node), worker (workerd) and client (jsdom) tests
     pnpm typecheck
 
-    bash scripts/setup.sh   # install dependencies and the git hooks (once per clone)
-    bash scripts/check.sh   # the gates CI runs: typecheck, then tests
+    bash scripts/setup.sh   # install dependencies and the git hooks (once per clone and per new worktree)
+    bash scripts/check.sh   # local gates: typecheck, then tests (CI also runs the build and the queue, link and PR-marker checks)
 
 Phase 1 runs entirely on fixture data: a dozen San Francisco restaurants in
 `fixtures/sf.ts`. Any five-digit ZIP works. Real discovery and menu ingestion
@@ -44,7 +44,9 @@ keyword fallback; an LLM provider slots in behind the same interface later.
 - `kb/`: the knowledge base. Questions, dish archetypes, lexicon. Content lives here, not in code.
 - `src/worker/`: Hono API on Cloudflare Workers, D1 access.
 - `src/client/`: React SPA.
+- `src/shared/`: DTOs shared by the Worker and the client.
 - `src/providers/`: seams for restaurants, menus, geocoding and the LLM, with fixture implementations.
+- `fixtures/`, `migrations/`, `test/`, `scripts/`: see [ARCHITECTURE.md](ARCHITECTURE.md).
 - `docs/superpowers/specs/`: design. `docs/superpowers/plans/`: implementation plans.
 
 ## Working on it
@@ -53,4 +55,13 @@ Agents and contributors follow [AGENTS.md](AGENTS.md): one branch, worktree and 
 
 ## Manual checklist
 
-See `docs/superpowers/plans/2026-10-08-dishision-phase-1-conversation-and-ranking.md`, Task 15, Step 4.
+Run `pnpm typecheck` then `pnpm test` (expect green), then `pnpm dev` and open the printed URL with `?debug=1`.
+
+1. ZIP `94110`, answer: normal, comforting (tap twice), beef, "Either", nothing to avoid. Round two: brothy yes, heaviness "On the lighter side", any beef. The card shows a beefy soup or soup plus beef pair, the explanation names the dishes and mentions broth, the runner-up is from another restaurant, and the debug drawer shows traces and the ranked list.
+2. Tap "Too heavy": a different dish appears and the debug drawer's `rejectedItemIds` includes the previous items. Tap "Just show me another" several times; nothing repeats.
+3. Start over, choose starving, rich, beef, "Familiar favourite"; round two asks hands. Expect a burger or cheesesteak.
+4. Start over, exclude every cuisine on the avoid question; expect the "No match." card, not an error.
+5. In round two, "Just decide" produces a recommendation immediately.
+6. Reload on the recommendation screen: the same recommendation returns.
+
+Stop the dev server.
