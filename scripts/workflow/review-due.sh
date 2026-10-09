@@ -90,7 +90,8 @@ src_lines=0
 if [ -n "$src_files" ]; then
   src_lines="$(echo "$src_files" | tr '\n' '\0' | xargs -0 cat 2>/dev/null | wc -l | tr -d ' ')"
 fi
-churn_since() { git diff --numstat "$1" "$base" -- $( [ -n "$paths" ] && echo "$paths" ) | grep -Ev '(^|/)(docs|review|plans|\.github)/|\.md$|\.lock$|lock\.(json|yaml)$|\.sum$' | awk '{ if ($1 != "-") s += $1 } END { print s + 0 }'; }
+# grep exits 1 when no source file changed; under pipefail that would abort the script.
+churn_since() { git diff --numstat "$1" "$base" -- $( [ -n "$paths" ] && echo "$paths" ) | { grep -Ev '(^|/)(docs|review|plans|\.github)/|\.md$|\.lock$|lock\.(json|yaml)$|\.sum$' || true; } | awk '{ if ($1 != "-") s += $1 } END { print s + 0 }'; }
 changed_src="$(churn_since "$rev")"
 changed_since_full="$changed_src"; [ -n "$full_rev" ] && changed_since_full="$(churn_since "$full_rev")"
 
