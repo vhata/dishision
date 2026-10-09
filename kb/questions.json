@@ -1,1 +1,165 @@
-[]
+[
+  {
+    "id": "hunger", "kind": "single", "round": 1, "priority": 100,
+    "prompt": "How hungry are you?",
+    "options": [
+      { "id": "light", "label": "Light", "effects": [{ "path": "hunger", "value": "light" }] },
+      { "id": "normal", "label": "Normal dinner", "effects": [{ "path": "hunger", "value": "normal" }] },
+      { "id": "very_hungry", "label": "Starving", "effects": [{ "path": "hunger", "value": "very_hungry" }] }
+    ]
+  },
+  {
+    "id": "feel", "kind": "multi", "round": 1, "priority": 95,
+    "prompt": "How should dinner feel tonight?",
+    "help": "Pick as many as you like. Tap once for sounds good, twice for really want.",
+    "options": [
+      { "id": "comforting", "label": "Comforting", "effects": [{ "path": "desiredQualities.comforting", "value": 1 }] },
+      { "id": "fresh", "label": "Fresh", "effects": [{ "path": "desiredQualities.fresh", "value": 1 }] },
+      { "id": "rich", "label": "Rich and indulgent", "effects": [{ "path": "desiredQualities.rich", "value": 1 }] },
+      { "id": "spicy", "label": "Spicy", "effects": [{ "path": "desiredQualities.spicy", "value": 1 }] },
+      { "id": "savory", "label": "Savory", "effects": [{ "path": "desiredQualities.savory", "value": 1 }] },
+      { "id": "no_idea", "label": "No idea", "effects": [{ "path": "noIdea", "value": 1 }] }
+    ]
+  },
+  {
+    "id": "protein", "kind": "multi", "round": 1, "priority": 90,
+    "prompt": "What protein sounds best?",
+    "options": [
+      { "id": "beef", "label": "Beef", "effects": [{ "path": "proteins.beef", "value": 1 }] },
+      { "id": "chicken", "label": "Chicken", "effects": [{ "path": "proteins.chicken", "value": 1 }] },
+      { "id": "pork", "label": "Pork", "effects": [{ "path": "proteins.pork", "value": 1 }] },
+      { "id": "seafood", "label": "Seafood", "effects": [{ "path": "proteins.seafood", "value": 1 }] },
+      { "id": "vegetarian", "label": "Vegetarian", "effects": [{ "path": "proteins.vegetarian", "value": 1 }] },
+      { "id": "any", "label": "No preference", "effects": [] }
+    ]
+  },
+  {
+    "id": "novelty", "kind": "scale", "round": 1, "priority": 85,
+    "prompt": "Familiar or interesting?",
+    "field": "novelty",
+    "stops": ["Familiar favourite", "Mostly familiar", "Either", "Somewhat interesting", "Surprise me"]
+  },
+  {
+    "id": "avoid", "kind": "multi", "round": 1, "priority": 80,
+    "prompt": "Anything you don't want tonight?",
+    "help": "Cuisines to skip. Anything else, use Other.",
+    "allowMissingOption": true,
+    "options": [
+      { "id": "japanese", "label": "Japanese", "effects": [{ "path": "exclusions", "value": "japanese" }] },
+      { "id": "chinese", "label": "Chinese", "effects": [{ "path": "exclusions", "value": "chinese" }] },
+      { "id": "thai", "label": "Thai", "effects": [{ "path": "exclusions", "value": "thai" }] },
+      { "id": "vietnamese", "label": "Vietnamese", "effects": [{ "path": "exclusions", "value": "vietnamese" }] },
+      { "id": "korean", "label": "Korean", "effects": [{ "path": "exclusions", "value": "korean" }] },
+      { "id": "indian", "label": "Indian", "effects": [{ "path": "exclusions", "value": "indian" }] },
+      { "id": "mexican", "label": "Mexican", "effects": [{ "path": "exclusions", "value": "mexican" }] },
+      { "id": "italian", "label": "Italian", "effects": [{ "path": "exclusions", "value": "italian" }] },
+      { "id": "american", "label": "American", "effects": [{ "path": "exclusions", "value": "american" }] },
+      { "id": "middle_eastern", "label": "Middle Eastern", "effects": [{ "path": "exclusions", "value": "middle_eastern" }] },
+      { "id": "fried", "label": "Anything fried", "effects": [{ "path": "exclusions", "value": "fried" }] },
+      { "id": "nothing", "label": "Nothing, all good", "effects": [] }
+    ]
+  },
+  {
+    "id": "brothy", "kind": "yesno", "round": 2, "priority": 90,
+    "prompt": "Does something brothy sound good?",
+    "applies": [{ "any": [
+      { "path": "desiredQualities.comforting", "op": "gte", "value": 0.5 },
+      { "path": "heaviness", "op": "lte", "value": -0.5 },
+      { "path": "noIdea", "op": "set" }
+    ] }],
+    "yes": [{ "path": "desiredQualities.brothy", "value": 1 }],
+    "no": [{ "path": "desiredQualities.brothy", "value": -1 }]
+  },
+  {
+    "id": "heaviness", "kind": "scale", "round": 2, "priority": 85,
+    "prompt": "How heavy should it be?",
+    "field": "heaviness",
+    "stops": ["Light", "On the lighter side", "Middle", "Substantial", "Properly heavy"],
+    "applies": [{ "path": "desiredQualities.rich", "op": "unset" }]
+  },
+  {
+    "id": "beef_style", "kind": "multi", "round": 2, "priority": 80,
+    "prompt": "What kind of beef?",
+    "applies": [{ "path": "proteins.beef", "op": "gte", "value": 0.5 }],
+    "options": [
+      { "id": "thinSliced", "label": "Thin-sliced and seasoned", "effects": [{ "path": "beef.thinSliced", "value": 1 }] },
+      { "id": "steak", "label": "Steak or chunks", "effects": [{ "path": "beef.steak", "value": 1 }] },
+      { "id": "braised", "label": "Slow-cooked", "effects": [{ "path": "beef.braised", "value": 1 }] },
+      { "id": "ground", "label": "Ground", "effects": [{ "path": "beef.ground", "value": 1 }] },
+      { "id": "any", "label": "Any beef", "effects": [] }
+    ]
+  },
+  {
+    "id": "seafood_type", "kind": "multi", "round": 2, "priority": 80,
+    "prompt": "Which seafood?",
+    "applies": [{ "path": "proteins.seafood", "op": "gte", "value": 0.5 }],
+    "options": [
+      { "id": "fish", "label": "Fish", "effects": [{ "path": "seafood.fish", "value": 1 }] },
+      { "id": "shellfish", "label": "Shrimp or shellfish", "effects": [{ "path": "seafood.shellfish", "value": 1 }] },
+      { "id": "salmon", "label": "Salmon", "effects": [{ "path": "seafood.salmon", "value": 1 }, { "path": "seafood.fish", "op": "max", "value": 0.5 }] },
+      { "id": "any", "label": "Any seafood", "effects": [] }
+    ]
+  },
+  {
+    "id": "spice", "kind": "scale", "round": 2, "priority": 75,
+    "prompt": "How much heat?",
+    "field": "desiredQualities.spicy",
+    "stops": ["None", "Mild", "Some", "Spicy", "Fiery"],
+    "applies": [{ "path": "desiredQualities.spicy", "op": "unset" }]
+  },
+  {
+    "id": "carbs", "kind": "multi", "round": 2, "priority": 70,
+    "prompt": "Noodles, rice, bread, or carbs on the side?",
+    "applies": [{ "all": [
+      { "path": "carbs.rice", "op": "unset" },
+      { "path": "carbs.noodles", "op": "unset" },
+      { "path": "carbs.bread", "op": "unset" },
+      { "path": "carbs.tortillas", "op": "unset" },
+      { "path": "carbs.starchAsMain", "op": "unset" }
+    ] }],
+    "options": [
+      { "id": "noodles", "label": "Noodles", "effects": [{ "path": "carbs.noodles", "value": 1 }] },
+      { "id": "rice", "label": "Rice", "effects": [{ "path": "carbs.rice", "value": 1 }] },
+      { "id": "bread", "label": "Bread or tortillas", "effects": [{ "path": "carbs.bread", "value": 1 }, { "path": "carbs.tortillas", "value": 1 }] },
+      { "id": "side", "label": "Keep carbs on the side", "effects": [{ "path": "carbs.starchAsMain", "value": -1 }] },
+      { "id": "any", "label": "Don't mind", "effects": [] }
+    ]
+  },
+  {
+    "id": "handheld", "kind": "yesno", "round": 2, "priority": 82,
+    "prompt": "Something you eat with your hands?",
+    "applies": [{ "all": [
+      { "path": "hunger", "op": "eq", "value": "very_hungry" },
+      { "path": "desiredQualities.rich", "op": "gte", "value": 0.5 }
+    ] }],
+    "yes": [{ "path": "handheld", "value": 1 }],
+    "no": [{ "path": "handheld", "value": -1 }]
+  },
+  {
+    "id": "archetype_check", "kind": "multi", "round": 2, "priority": 60,
+    "prompt": "Gut reactions. Which of these sound good?",
+    "dynamicOptions": "archetypes",
+    "allowMissingOption": true,
+    "applies": [{ "path": "derived.plausibleArchetypeCount", "op": "gte", "value": 5 }]
+  },
+  {
+    "id": "budget", "kind": "single", "round": 2, "priority": 50,
+    "prompt": "Budget?",
+    "applies": [{ "path": "budget", "op": "unset" }],
+    "options": [
+      { "id": "low", "label": "Keep it cheap", "effects": [{ "path": "budget.max", "value": 15 }] },
+      { "id": "moderate", "label": "Moderate", "effects": [{ "path": "budget.max", "value": 30 }] },
+      { "id": "whatever", "label": "Whatever, just make dinner good", "effects": [{ "path": "budget.flexible", "value": 1 }] }
+    ]
+  },
+  {
+    "id": "leftovers", "kind": "yesno", "round": 2, "priority": 40,
+    "prompt": "Do leftovers matter?",
+    "applies": [{ "any": [
+      { "path": "hunger", "op": "eq", "value": "very_hungry" },
+      { "path": "budget.max", "op": "lte", "value": 15 }
+    ] }],
+    "yes": [{ "path": "leftovers", "value": "want" }],
+    "no": [{ "path": "leftovers", "value": "avoid" }]
+  }
+]
