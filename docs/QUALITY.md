@@ -48,15 +48,17 @@ Toolchain pins: `.nvmrc` (Node), `packageManager` in `package.json` (pnpm), `pnp
 
 `.github/workflows/main-validation.yml` runs daily at 11:23 UTC and on demand, and on pull requests that edit it or the scripts it calls. It runs the full gates and the production build, records the commit, uploads evidence for 14 days, and reports whether a codebase review is due. A red main, from the push run or the schedule, is reverted or filed as a P1 (P0 if release-blocking) the same day. A missing scheduled run is not a pass.
 
-## Branch protection
+## Branch protection (as configured on 2026-10-09)
 
-Not configured as of 2026-10-09: `main` has no protection rule and no rulesets. Proposed settings, to be applied by the user and recorded here when they are:
+Applied by the owner through the GitHub API and read back the same day.
 
 - Required checks: `check`, `Queue and PR hygiene`; up-to-date-with-base: off (the push-to-main run and the red-main policy cover the rare bad combination).
-- Linear history: on. Conversation resolution: off. Force pushes and deletions: blocked for agents by this workflow regardless; the GitHub toggle is the owner's choice.
+- Linear history: on. Conversation resolution: off. Force pushes and deletions: blocked.
 - Approving reviews required: 0; independent agent review is recorded in each PR's `## Review` section.
-- Administrator enforcement: off, so the owner can commit queue entries and plans directly to `main` and can merge a red PR deliberately.
+- Administrator enforcement: off, so the owner can commit queue entries and plans directly to `main` and can merge a red PR deliberately. The rules bind agents through this workflow, not through GitHub.
 - Merge method: squash only; title from PR title, message from PR body; head branches deleted on merge.
+
+Inspect with `gh api repos/vhata/dishision/branches/main/protection` and `gh api repos/vhata/dishision --jq '{allow_squash_merge,allow_merge_commit,allow_rebase_merge,delete_branch_on_merge,squash_merge_commit_title,squash_merge_commit_message}'`.
 
 ## PR evidence
 
