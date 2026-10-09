@@ -6,3 +6,8 @@ dist/
 *.log
 .DS_Store
 .superpowers/
+.worktrees/
+evidence/
+test-results/
+.feral/
+AUDIT.md

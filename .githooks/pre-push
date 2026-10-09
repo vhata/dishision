@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Pre-push: the same gates CI runs (typecheck, tests). No docs-only skip: the
+# suite is fast enough to run every time.
+# Bypass (--no-verify) is for a broken toolchain only; say so in the PR.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+bash scripts/check.sh
