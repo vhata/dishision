@@ -1,4 +1,4 @@
-import type { AnswerDto, ApiError, SessionDto } from '../shared/api';
+import type { AnswerDto, ApiError, FeedbackReason, RecommendResponse, SessionDto } from '../shared/api';
 
 export const isDebug = new URLSearchParams(window.location.search).get('debug') === '1';
 const debugQuery = isDebug ? '?debug=1' : '';
@@ -28,4 +28,6 @@ export const api = {
   getSession: (id: string) => request<SessionDto>(`/api/session/${id}${debugQuery}`),
   answer: (id: string, answer: AnswerDto) => post<SessionDto>(`/api/session/${id}/answer${debugQuery}`, answer),
   suggest: (id: string, nodeId: string, text: string) => post<{ ok: true }>(`/api/session/${id}/suggest`, { nodeId, text }),
+  recommend: (id: string, force = false) => post<RecommendResponse>(`/api/session/${id}/recommend${debugQuery}`, { force }),
+  feedback: (id: string, reason: FeedbackReason) => post<RecommendResponse>(`/api/session/${id}/feedback${debugQuery}`, { reason }),
 };

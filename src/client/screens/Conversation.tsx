@@ -6,9 +6,10 @@ import { QuestionCard } from '../components/QuestionCard';
 interface Props {
   session: SessionDto;
   onUpdate: (session: SessionDto) => void;
+  onDecide: () => void;
 }
 
-export function Conversation({ session, onUpdate }: Props) {
+export function Conversation({ session, onUpdate, onDecide }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const question = session.question;
@@ -39,6 +40,11 @@ export function Conversation({ session, onUpdate }: Props) {
       <p className="mb-3 text-sm uppercase tracking-wide text-stone-500">{question.round === 1 ? 'Getting a feel for it' : 'Narrowing it down'}</p>
       <QuestionCard key={question.nodeId} question={question} busy={busy} onSubmit={submit} onSuggest={suggest} />
       {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
+      {question.round === 2 ? (
+        <button type="button" className="mt-3 text-sm text-stone-500 hover:underline" onClick={onDecide}>
+          Just decide
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { api, ApiRequestError, isDebug } from './api';
 import { DebugDrawer } from './components/DebugDrawer';
 import { Conversation } from './screens/Conversation';
 import { Landing } from './screens/Landing';
+import { Recommendation } from './screens/Recommendation';
 
 function sessionIdFromHash(): string | undefined {
   const m = window.location.hash.match(/^#s=([0-9a-f-]+)$/i);
@@ -14,6 +15,7 @@ export function App() {
   const [session, setSession] = useState<SessionDto | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [forceDecide, setForceDecide] = useState(false);
 
   useEffect(() => {
     const id = sessionIdFromHash();
@@ -40,6 +42,7 @@ export function App() {
 
   const reset = () => {
     setSession(null);
+    setForceDecide(false);
     window.history.replaceState(null, '', ' ');
   };
 
@@ -55,15 +58,9 @@ export function App() {
       ) : null}
 
       {!session ? <Landing busy={busy} error={error} onStart={start} /> : null}
-      {session?.status === 'asking' ? <Conversation session={session} onUpdate={update} /> : null}
-      {session && session.status !== 'asking' ? (
-        <section className="mt-10 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200">
-          <h2 className="text-xl font-semibold">Enough to go on.</h2>
-          <p className="mt-2 text-stone-600">Recommendations arrive in the next task.</p>
-          <button type="button" className="mt-4 text-sm text-stone-600 hover:underline" onClick={reset}>
-            Start over
-          </button>
-        </section>
+      {session?.status === 'asking' && !forceDecide ? <Conversation session={session} onUpdate={update} onDecide={() => setForceDecide(true)} /> : null}
+      {session && (session.status !== 'asking' || forceDecide) ? (
+        <Recommendation sessionId={session.id} force={forceDecide} onStartOver={reset} />
       ) : null}
 
       {isDebug && session?.debug ? <DebugDrawer title="session" data={session.debug} /> : null}
