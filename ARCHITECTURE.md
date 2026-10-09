@@ -9,7 +9,7 @@ One Cloudflare Worker (Hono API) plus a React SPA served as Workers Static Asset
 - `src/core/`: pure reasoning, no Worker, DOM or provider imports. Preference model (`preferences.ts`), knowledge base schema, rule language and loader (`kb/`), question graph (`questions.ts`), "Other" text parsing (`otherText.ts`), archetype planner (`planner.ts`), lexicon tagger (`lexicon.ts`), quality alignment (`alignment.ts`), item scoring with trace (`scoring.ts`), pair composition and recommendation (`pairs.ts`), menu-less fallback (`fallback.ts`), explanation templates (`explain.ts`), feedback edits (`feedback.ts`), shared value types (`types.ts`).
 - `kb/`: the knowledge base as versioned JSON: `questions.json`, `archetypes.json`, `lexicon.json`. Content lives here, not in code.
 - `src/providers/`: seams and their fixture implementations: `types.ts` (interfaces), `llm/fixture.ts`, `candidates/fixture.ts`, `geocoder/fixture.ts`.
-- `src/worker/`: Hono app (`index.ts`), env bindings (`env.ts`), provider selection (`deps.ts`), request validation, D1 access (`db/`), session routes (`routes/session.ts`), recommendation production and order links.
+- `src/worker/`: Hono app (`index.ts`), env bindings (`env.ts`), provider selection (`deps.ts`), request validation, D1 access (`db/`), session routes (`routes/session.ts`), "Other" text parsing through the `Llm` seam (`other.ts`), recommendation production (`recommendation.ts`) and order links (`links.ts`).
 - `src/shared/`: DTOs shared by the Worker and the client (`api.ts`).
 - `src/client/`: React SPA. Screens (`Landing`, `Conversation`, `Recommendation`), components (`ChipGroup`, `ScaleInput`, `QuestionCard`, `RecommendationCard`, `DebugDrawer`), API client.
 - `fixtures/sf.ts`: San Francisco restaurants and menus used by tests and by the fixture candidate source.
@@ -26,7 +26,7 @@ Changes here land before dependent work starts, or are stacked explicitly.
 - `src/core/kb/schema.ts`: Zod schemas for nodes, options, effects, rules, archetypes, lexicon entries and overlay additions, with `KB_SCHEMA_VERSION`. `kb/*.json` must validate against it; the loader rejects anything else.
 - `src/core/types.ts`: `SCORE_KEYS`, `Scores`, `ItemTags`, `MenuItem`, `RestaurantSummary`. Every scoring, tagging and archetype vector uses these keys.
 - `migrations/0001_init.sql`: the D1 schema. Adding a table or column is a new numbered migration, never an edit to a shipped one.
-- API routes under `/api/session` as listed in the design spec; `/api/health` for liveness.
+- API routes under `/api/session`: `POST /`, `GET /:id`, `POST /:id/answer`, `POST /:id/suggest`, `POST /:id/recommend`, `POST /:id/feedback`. This is a subset of the design spec's list; feedback derives the shown items server-side rather than taking `shownItemIds`. `/api/health` for liveness.
 
 ## Invariants
 
