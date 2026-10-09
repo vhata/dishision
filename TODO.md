@@ -14,10 +14,10 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 
 ### Unprioritized
 
-- [CORE] `cuisine-exclusion-tag-only` — **Cuisine exclusions match cuisine tags only, not description words or substrings.** Excluding "chinese" currently drops Pad See Ew because its description says "Chinese broccoli", and `isExcluded` substring matching makes "fish" exclude "shellfish".
+- [CORE] `cuisine-exclusion-tag-only` — **Cuisine exclusions match cuisine tags only, not description words or substrings.** Excluding "chinese" currently drops Pad See Ew because its description says "Chinese broccoli", and `isExcluded` substring matching makes "fish" exclude "shellfish". Excluding "american" likewise drops any dish whose description mentions American cheese.
   - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: `src/core/scoring.ts` hardFilterReason and `src/core/planner.ts` isExcluded; keep description scanning for ingredient exclusions
-- [CORE] `other-text-keyword-false-positives` — **The "Other" keyword parser stops reading "hot pot" as spicy, "hand-pulled noodles" as handheld, and "had a burger" as recentMeals ["a"].** Articles must be stripped and multi-word dishes matched before single words.
+- [CORE] `other-text-keyword-false-positives` — **The "Other" keyword parser stops reading "hot pot" as spicy, "hand-pulled noodles" as handheld, and "had a burger" as recentMeals ["a"].** Articles must be stripped and multi-word dishes matched before single words. The future-meal pattern's `\w+day` also matches "today", so "eating light today" records futureMeals ["light"] and loses the wish for something light.
   - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: `src/core/otherText.ts` keywordParse and `test/core/otherText.test.ts`
 - [CORE] `explain-protein-comparative-phrase` — **The runner-up explanation gives protein its own comparative phrase.** "a little less the protein you asked for" reads awkwardly.
@@ -33,7 +33,7 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 - [KB] `heaviness-node-applies-condition` — **The heaviness node applies only when comforting is set and rich is unset, as the spec says, or the spec is updated to match the current rule.** It currently applies whenever rich is unset.
   - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: `kb/questions.json` heaviness node `applies`; design spec round-two list
-- [WORKER] `recommendation-row-per-reload` — **Reloading the recommendation screen reads the latest stored recommendation instead of inserting a new row.** The screen's effect fires twice under StrictMode and every reload inserts a `recommendations` row.
+- [WORKER] `recommendation-row-per-reload` — **Reloading the recommendation screen reads the latest stored recommendation instead of inserting a new row.** The screen's effect fires twice under StrictMode and every reload inserts a `recommendations` row. The two in-flight requests have no ordering guard, so the screen can show a different row from the one feedback treats as latest; harmless while fixtures are deterministic.
   - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: add `GET /api/session/:id/recommendation` in `src/worker/routes/session.ts`; have `src/client/screens/Recommendation.tsx` read before it recommends
 - [WORKER] `error-handler-leaks-message` — **The Worker's error handler returns a generic message to clients and logs the detail.** `onError` currently returns `err.message`, which must be locked down before any public exposure.
@@ -54,9 +54,9 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 - [CORE] `pair-feedback-covers-all-items` — **Feedback on a pair recommendation records the archetype and cuisine of every shown dish, not only the first.** `had_recently` on a pair currently penalises one dish's archetype.
   - Source: independent review of commit 825592c on phase-1-conversation-and-ranking, 2026-10-09
   - Starting point: `src/worker/routes/session.ts` feedback route reads `items[0]` only
-- [WORKER] `exhausted-copy-names-a-possible-action` — **The no-more-options and no-match messages tell the diner something they can actually do.** Both say "Loosen a restriction", but a recommended session rejects further answers; only Start over works.
+- [WORKER] `exhausted-copy-names-a-possible-action` — **The no-more-options and no-match messages tell the diner something they can actually do.** Both suggest loosening a restriction, which a recommended session cannot do; it rejects further answers, so only Start over works.
   - Source: independent review of commit 825592c on phase-1-conversation-and-ranking, 2026-10-09
-  - Starting point: `src/worker/routes/session.ts` no_more_options message and NO_MATCH_MESSAGE
+  - Starting point: `src/worker/recommendation.ts` NO_MATCH_MESSAGE; `src/worker/routes/session.ts` no_more_options message
 - [CORE] `closed-restaurant-hard-filter` — **A restaurant that is closed with no scheduled-order option is hard-filtered, as the spec's scoring section requires.** Phase 1 only discounts `openNow=false` through restaurant quality; fixtures are always open and hours arrive with real discovery.
   - Source: phase-1 final review ruling, docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Blocked by: opening hours from real discovery (design spec phase 4)
