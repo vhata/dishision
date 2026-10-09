@@ -60,7 +60,11 @@ export function composePair(a: ScoredItem, b: ScoredItem, prefs: DinnerPreferenc
   if (prefs.budget.max !== undefined && !prefs.budget.flexible && total > prefs.budget.max * 100) return null;
 
   const coverage = alignQualities(desiredVector(prefs), combineScores(a.item.scores, b.item.scores));
-  const components: Record<string, number> = { qualities: WEIGHTS.qualities * coverage.score };
+  // Coverage rewards complementary dishes; averaging in each dish's own alignment stops a weak partner riding along for free.
+  const ownA = (a.trace.components.qualities ?? 0) / WEIGHTS.qualities;
+  const ownB = (b.trace.components.qualities ?? 0) / WEIGHTS.qualities;
+  const quality = 0.5 * coverage.score + 0.25 * ownA + 0.25 * ownB;
+  const components: Record<string, number> = { qualities: WEIGHTS.qualities * quality };
   for (const key of Object.keys(a.trace.components)) {
     if (key === 'qualities') continue;
     components[key] = ((a.trace.components[key] ?? 0) + (b.trace.components[key] ?? 0)) / 2;
