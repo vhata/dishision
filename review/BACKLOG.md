@@ -6,11 +6,6 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
 
 ## P1 High
 
-- [TOOLING] `review-due-zero-churn` — **`review-due.sh` prints a verdict and exits 0 when no source changed since the latest review.** It exits 1 instead, which turns the daily main-validation run red as soon as a review is recorded at current main.
-  - Source: review/2026-10-09-0901-full.md, 2026-10-09
-  - Findings: `review-due-fails-on-zero-churn`
-  - Starting point: `scripts/workflow/review-due.sh` `churn_since`; the repo-workflow skill's copy needs the same fix
-  - Related: `gate-per-project-and-core-imports`
 - [WORKER] `coarsen-session-coordinates` — **Sessions created from device location store a coarse point, never the raw GPS fix.** Raw coordinates are stored at full precision, which breaks the coarse-location invariant and the spec's privacy section.
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `session-coords-stored-at-full-precision`
