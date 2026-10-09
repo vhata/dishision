@@ -30,7 +30,7 @@ Focus areas for this project: the invariants in [../ARCHITECTURE.md](../ARCHITEC
 | Reviewed commit | `<sha>` on main |
 | Previous review | <file> at `<sha>` / None |
 | Reviewers | <coordinator; independent agents and the areas each covered> |
-| Baseline | `bash scripts/check.sh`: <result>; `bash scripts/e2e.sh`: <result>; <other baseline commands>: <results> |
+| Baseline | `bash scripts/check.sh`: <result>; `bash scripts/build.sh`: <result>; <other baseline commands>: <results> |
 
 ## Summary
 ## Invariants
