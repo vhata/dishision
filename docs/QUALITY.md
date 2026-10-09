@@ -27,7 +27,7 @@ Each check is a standalone script in `scripts/`, runnable from any directory, ex
 
 There is no formatter or linter gate; see `adopt-formatter-and-linter` in [../TODO.md](../TODO.md).
 
-Hooks are the tracked scripts in `.githooks/`, wired with `git config core.hooksPath .githooks` by `bash scripts/setup.sh` (one run covers every worktree of the repository). Pre-commit only checks; it never rewrites files. Measured on 2026-10-09 on a warm checkout: pre-commit under one second; pre-push (`scripts/check.sh`) about five seconds. Bypassing a hook is for a broken toolchain only; state the bypass and the equivalent checks in the PR.
+Hooks are the tracked scripts in `.githooks/`, wired with `git config core.hooksPath .githooks` by `bash scripts/setup.sh` (one run covers every worktree of the repository). Pre-commit only checks; it never rewrites files, and it validates the staged copy of the queue files rather than the working tree. Measured on 2026-10-09 on a warm checkout: pre-commit under one second; pre-push (`scripts/check.sh`) about five seconds. Bypassing a hook is for a broken toolchain only; state the bypass and the equivalent checks in the PR.
 
 Toolchain pins: `.nvmrc` (Node), `packageManager` in `package.json` (pnpm), `pnpm-lock.yaml` (dependencies, installed with `--frozen-lockfile`), `pnpm-workspace.yaml` (allowed build scripts: esbuild, workerd). Bumping a pin is its own PR.
 
@@ -37,12 +37,12 @@ Toolchain pins: `.nvmrc` (Node), `packageManager` in `package.json` (pnpm), `pnp
 - A change to a route or D1 query carries a test in `test/worker/` against the real migration applied to an in-process D1.
 - A change to a component's interaction (chip cycling, scale stops) carries a `test/client/` test; pure layout changes are verified by the README checklist and say so in the PR.
 - No clock, randomness or network in `src/core/` or in tests of it; fixtures are the oracle.
-- An empty or skipped suite is a failed gate. There is no coverage threshold.
+- A suite that collects no tests is a failed gate (`scripts/test.sh` passes `--passWithNoTests=false`); the gate cannot see `.skip`, so skipping a test to get green is a policy violation stated in the PR. There is no coverage threshold.
 - No automatic retries. A flaky test is filed in `TODO.md` with the failing run's log and fixed or quarantined by name.
 
 ## CI
 
-`.github/workflows/ci.yml` runs on pull requests and on pushes to `main`. Jobs: `check` (setup, `scripts/check.sh`, `scripts/build.sh`) and `Queue and PR hygiene` (queue validation, link check, PR marker validation on pull requests). pnpm and Node versions come from `package.json` and `.nvmrc`. Superseded runs are cancelled on PR branches only, never on `main`. Failure evidence is uploaded for 7 days.
+`.github/workflows/ci.yml` runs on pull requests and on pushes to `main`. Jobs: `check` (setup, `scripts/check.sh`, `scripts/build.sh`) and `Queue and PR hygiene` (queue validation, link check, PR marker validation on pull requests). pnpm and Node versions come from `package.json` and `.nvmrc`. Superseded runs are cancelled on PR branches only, never on `main`. On failure, the check and build logs under `evidence/` are uploaded for 7 days.
 
 ## Scheduled validation of main
 

@@ -12,6 +12,8 @@ on:
       - .github/workflows/main-validation.yml
       - scripts/workflow/review-due.sh
       - scripts/check.sh
+      - scripts/typecheck.sh
+      - scripts/test.sh
       - scripts/build.sh
       - scripts/setup.sh
 

@@ -7,8 +7,19 @@ cd "$(git rev-parse --show-toplevel)"
 staged="$(git diff --cached --name-only --diff-filter=ACMR)"
 [ -n "$staged" ] || exit 0
 
+# Validate the staged content, not the working tree: extract the index copies.
 if printf '%s\n' "$staged" | grep -Eq '^(TODO\.md|review/BACKLOG\.md)$'; then
-  bash scripts/workflow/check-queues.sh --strict
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  args=""
+  if git cat-file -e :TODO.md 2>/dev/null; then
+    git show :TODO.md > "$tmp/TODO.md"; args="$args --todo $tmp/TODO.md"
+  fi
+  if git cat-file -e :review/BACKLOG.md 2>/dev/null; then
+    git show :review/BACKLOG.md > "$tmp/BACKLOG.md"; args="$args --backlog $tmp/BACKLOG.md"
+  fi
+  # shellcheck disable=SC2086
+  bash scripts/workflow/check-queues.sh --strict $args
 fi
 if printf '%s\n' "$staged" | grep -Eq '\.md$'; then
   bash scripts/workflow/check-links.sh
