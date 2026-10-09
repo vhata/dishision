@@ -57,6 +57,13 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 - [WORKER] `exhausted-copy-names-a-possible-action` — **The no-more-options and no-match messages tell the diner something they can actually do.** Both say "Loosen a restriction", but a recommended session rejects further answers; only Start over works.
   - Source: independent review of commit 825592c on phase-1-conversation-and-ranking, 2026-10-09
   - Starting point: `src/worker/routes/session.ts` no_more_options message and NO_MATCH_MESSAGE
+- [CORE] `closed-restaurant-hard-filter` — **A restaurant that is closed with no scheduled-order option is hard-filtered, as the spec's scoring section requires.** Phase 1 only discounts `openNow=false` through restaurant quality; fixtures are always open and hours arrive with real discovery.
+  - Source: phase-1 final review ruling, docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
+  - Blocked by: opening hours from real discovery (design spec phase 4)
+  - Starting point: `src/core/scoring.ts` hardFilterReason; `RestaurantSummary` needs an hours or open-now field with an unknown state
+- [CORE] `explanation-contrast-sentence` — **The explanation can say what it skipped and why, in the spec's "Skipped the curry: too rich for not heavy" shape.** The template currently names the runner-up's biggest penalty instead; the ruling called that within the template's latitude, so this is a copy improvement, not a defect.
+  - Source: phase-1 final review ruling, docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
+  - Starting point: `src/core/explain.ts`; the trace already carries penalties per candidate, so the sentence needs the strongest rejected candidate from `ranked`
 - [TOOLING] `adopt-formatter-and-linter` — **Decide on a formatter and linter (or neither) and, if adopted, add `scripts/fmt-check.sh` and `scripts/lint.sh` as pre-commit and CI gates.** Phase 1 chose none; adopting one reformats the whole tree, so it is a PR of its own.
   - Source: repo-workflow install, branch task/repo-workflow-install, 2026-10-09
   - Starting point: `scripts/check.sh` gate list and `docs/QUALITY.md` gate table
