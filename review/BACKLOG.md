@@ -75,7 +75,7 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
 
 ## P3 Low
 
-- [CORE] `lexicon-tagging-accuracy` — **Lexicon tagging stops misreading descriptions, word collisions and entry order.** Mains that mention "side" become sides, "hot", "hen" and "bun" misfire, and specific entries win only when listed last. Latent on fixtures, whose hand-written scores override tagging; raise to P2 before real menu ingestion.
+- [CORE] `lexicon-tagging-accuracy` — **Lexicon tagging stops misreading descriptions, word collisions and entry order.** Mains that mention "side" become sides, "hot", "hen" and "bun" misfire, and specific entries win only when listed last. Mostly latent on fixtures, whose hand-written scores override tagging ("bun" already mis-tags fixture Bun Bo Hue); raise to P2 before real menu ingestion.
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `lexicon-portion-side-marker`, `lexicon-specific-merge-order`, `lexicon-word-false-positives`
   - Starting point: `src/core/lexicon.ts` tagItem merge; `kb/lexicon.json` portion, spicy, chicken and bread entries
