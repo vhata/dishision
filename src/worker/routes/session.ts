@@ -8,7 +8,10 @@ import { countSuggestions, insertSuggestion } from '../db/suggestions';
 import type { Deps } from '../deps';
 import type { Env } from '../env';
 import { applyOther, parseOther } from '../other';
-import { AnswerSchema, CreateSessionSchema, SuggestSchema } from '../validation';
+import { applyFeedback } from '../../core/feedback';
+import { latestRecommendation, setFeedback } from '../db/recommendations';
+import { produceRecommendation } from '../recommendation';
+import { AnswerSchema, CreateSessionSchema, FeedbackSchema, RecommendSchema, SuggestSchema } from '../validation';
 
 export type AppContext = { Bindings: Env; Variables: { deps: Deps } };
 
@@ -100,4 +103,39 @@ sessionRoutes.post('/:id/suggest', async (c) => {
   }
   await insertSuggestion(c.env.DB, { id: crypto.randomUUID(), sessionId: rec.id, nodeId: parsed.data.nodeId, text: parsed.data.text, prefs: rec.state.prefs });
   return c.json({ ok: true }, 202);
+});
+
+sessionRoutes.post('/:id/recommend', async (c) => {
+  const rec = await getSession(c.env.DB, c.req.param('id'));
+  if (!rec) return c.json({ error: 'not_found' }, 404);
+  const parsed = RecommendSchema.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) return c.json(invalid(parsed.error.issues), 400);
+  if (rec.status === 'asking' && !parsed.data.force) {
+    return c.json({ error: 'still_asking', message: 'A few more answers first, or send force to decide now.' }, 409);
+  }
+  const response = await produceRecommendation(c.get('deps'), c.env.DB, rec, c.req.query('debug') === '1');
+  if (response.primary) await saveSession(c.env.DB, { ...rec, status: 'recommended' });
+  return c.json(response);
+});
+
+sessionRoutes.post('/:id/feedback', async (c) => {
+  const rec = await getSession(c.env.DB, c.req.param('id'));
+  if (!rec) return c.json({ error: 'not_found' }, 404);
+  const parsed = FeedbackSchema.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) return c.json(invalid(parsed.error.issues), 400);
+  const latest = await latestRecommendation(c.env.DB, rec.id);
+  if (!latest) return c.json({ error: 'nothing_to_reject', message: 'Ask for a recommendation first.' }, 409);
+
+  await setFeedback(c.env.DB, latest.id, parsed.data.reason);
+  const shown = latest.payload.primary;
+  const shownIds = shown.items.map((i) => i.id);
+  const totalPriceCents = shown.items.reduce((n, i) => n + (i.priceCents ?? 0), 0) || undefined;
+  const archetypeId = c.get('deps').kb.archetypes.find((a) => shown.items.some((i) => i.id.includes(a.id)))?.id;
+  const prefs = applyFeedback(rec.state.prefs, parsed.data.reason, { cuisine: shown.restaurant.cuisine, archetypeId, totalPriceCents });
+  const updated: SessionRecord = {
+    ...rec,
+    state: { ...rec.state, prefs, rejectedItemIds: [...new Set([...rec.state.rejectedItemIds, ...shownIds])] },
+  };
+  await saveSession(c.env.DB, updated);
+  return c.json(await produceRecommendation(c.get('deps'), c.env.DB, updated, c.req.query('debug') === '1'));
 });

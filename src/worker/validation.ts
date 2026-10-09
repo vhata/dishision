@@ -1,3 +1,4 @@
+import { FEEDBACK_REASONS } from '../core/feedback';
 import { z } from 'zod';
 
 export const CreateSessionSchema = z.union([
@@ -21,3 +22,6 @@ export const AnswerSchema = z.discriminatedUnion('kind', [
 ]);
 
 export const SuggestSchema = z.object({ nodeId, text: z.string().trim().min(2).max(80) });
+
+export const RecommendSchema = z.object({ force: z.boolean().optional() });
+export const FeedbackSchema = z.object({ reason: z.enum(FEEDBACK_REASONS) });

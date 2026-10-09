@@ -38,3 +38,48 @@ export interface ApiError {
   message?: string;
   issues?: unknown;
 }
+
+export type { FeedbackReason } from '../core/feedback';
+
+export interface MenuItemDto {
+  id: string;
+  name: string;
+  description?: string;
+  priceCents?: number;
+  menuless?: boolean;
+}
+
+export interface OrderLinks {
+  website?: string;
+  maps?: string;
+  doordash: string;
+  ubereats: string;
+}
+
+export interface RecommendationDto {
+  kind: 'single' | 'pair';
+  restaurant: import('../core/types').RestaurantSummary;
+  items: MenuItemDto[];
+  score: number;
+  explanation: string;
+  menuless: boolean;
+  links: OrderLinks;
+  trace?: import('../core/scoring').ScoreTrace;
+}
+
+export interface RecommendResponse {
+  recommendationId: string | null;
+  primary: RecommendationDto | null;
+  runnerUp: RecommendationDto | null;
+  message?: string;
+  debug?: {
+    candidateRestaurants: number;
+    candidateItems: number;
+    rejectedItemIds: string[];
+    ranked: { label: string; restaurant: string; score: number }[];
+  };
+}
+
+export interface FeedbackRequest {
+  reason: import('../core/feedback').FeedbackReason;
+}
