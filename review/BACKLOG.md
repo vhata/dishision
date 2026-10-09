@@ -23,7 +23,7 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
 
 ## P2 Normal
 
-- [WORKER] `answer-must-match-current-question` — **The answer route accepts only the current question's node, and a replayed answer changes nothing.** Any node is accepted in any order and any number of times, so retries use up round-two slots and round one can be skipped.
+- [WORKER] `answer-must-match-current-question` — **The answer route accepts only the current question's node, and a replayed answer changes nothing.** Any node is accepted in any order and any number of times, so retries use up round-two slots and round two can be skipped.
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `answer-not-checked-against-current-question`
   - Starting point: `src/worker/routes/session.ts` answer route; `src/core/questions.ts` nextQuestion
@@ -36,11 +36,6 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `kb-semantic-validation`, `overlay-id-prefix-collision`
   - Starting point: `src/core/kb/loader.ts` mergeKb and loadBaseKb; `src/core/kb/schema.ts`
-- [CORE] `lexicon-tagging-accuracy` — **Lexicon tagging stops misreading descriptions, word collisions and entry order.** Mains that mention "side" become sides, "hot", "hen" and "bun" misfire, and specific entries win only when listed last.
-  - Source: review/2026-10-09-0901-full.md, 2026-10-09
-  - Findings: `lexicon-portion-side-marker`, `lexicon-specific-merge-order`, `lexicon-word-false-positives`
-  - Starting point: `src/core/lexicon.ts` tagItem merge; `kb/lexicon.json` portion, spicy, chicken and bread entries
-  - Related: `vegetarian-marker-wins-over-implied-protein`
 - [CORE] `explanations-stay-grounded` — **Explanation phrases claim only what the candidate's data supports.** "Lime and acid brightness" invents an ingredient, unknown scores read as avoided qualities, and the runner-up's "a little less" is never compared.
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `explain-ungrounded-phrases`, `runner-up-comparative-ungrounded`
@@ -80,6 +75,11 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
 
 ## P3 Low
 
+- [CORE] `lexicon-tagging-accuracy` — **Lexicon tagging stops misreading descriptions, word collisions and entry order.** Mains that mention "side" become sides, "hot", "hen" and "bun" misfire, and specific entries win only when listed last. Latent on fixtures, whose hand-written scores override tagging; raise to P2 before real menu ingestion.
+  - Source: review/2026-10-09-0901-full.md, 2026-10-09
+  - Findings: `lexicon-portion-side-marker`, `lexicon-specific-merge-order`, `lexicon-word-false-positives`
+  - Starting point: `src/core/lexicon.ts` tagItem merge; `kb/lexicon.json` portion, spicy, chicken and bread entries
+  - Related: `vegetarian-marker-wins-over-implied-protein`
 - [CLIENT] `client-error-and-state-polish` — **Client error messages, suggestion feedback, hidden Other text and session restore behave as the user expects.** Six small defects in one area: stale geolocation errors, raw error codes, thanks on failure, hidden text still sent, fragile hash restore, no retry after a failed recommend.
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `stale-geo-error-masks-server-error`, `raw-error-codes-in-copy`, `suggestion-failure-still-thanks`, `hidden-other-text-still-submitted`, `hash-restore-fragile`, `recommend-error-has-no-retry`
