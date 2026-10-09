@@ -63,6 +63,24 @@ describe('composePair', () => {
     expect(pair.trace.positiveSignals.protein).toBe(1);
   });
 
+  it('never records an avoided quality as a positive signal of a pair', () => {
+    const comTam: MenuItem = {
+      id: 'comtam', placeId: 'pho', name: 'Com Tam Suon', priceCents: 1700,
+      scores: { savory: 0.85, rich: 0.6, comforting: 0.8, carbHeavy: 0.85, proteinForward: 0.6, spicy: 0, portion: 0.8 },
+      tags: { proteins: ['pork'], carbs: ['rice'], cuisine: 'vietnamese', formats: ['plate'], archetypeId: 'broken_rice' },
+    };
+    const brothyNotSpicy = applyEffects(emptyPreferences(), [
+      { path: 'desiredQualities.brothy', value: 1 },
+      { path: 'desiredQualities.spicy', value: -1 },
+    ]);
+    const a = scoreItem(pho, phoHouse, brothyNotSpicy, ctx)!;
+    const b = scoreItem(comTam, phoHouse, brothyNotSpicy, ctx)!;
+    const pair = composePair(a, b, brothyNotSpicy, ctx)!;
+    // Both dishes are mild, so "not spicy" is met, but a met avoidance is not something to praise.
+    expect(pair.trace.positiveSignals.brothy).toBeGreaterThanOrEqual(0.9);
+    expect(pair.trace.positiveSignals.spicy).toBeUndefined();
+  });
+
   it('penalises two heavy or two starchy dishes', () => {
     const prefs = emptyPreferences();
     const a = scoreItem(greenCurry, siam, prefs, ctx)!;

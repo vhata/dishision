@@ -88,10 +88,13 @@ describe('POST /api/session/:id/feedback', () => {
 
 describe('feedback details', () => {
   it('carries the shown dish archetype and cuisine into had_recently', async () => {
-    const id = await readySession();
+    // Steer away from the soups so the winner is a dish whose id does not embed its archetype;
+    // otherwise the old substring heuristic would pass this test too.
+    const id = await readySession(['vietnamese', 'chinese', 'korean', 'mexican']);
     const first = (await post<RecommendResponse>(`/api/session/${id}/recommend`, {})).body;
     const shown = first.primary!.items[0]!;
     expect(shown.archetypeId).toBeTruthy();
+    expect(shown.id).not.toContain(shown.archetypeId!);
     const res = await post<RecommendResponse>(`/api/session/${id}/feedback?debug=1`, { reason: 'had_recently' });
     expect(res.status).toBe(200);
     const session = (await SELF.fetch(`http://example.com/api/session/${id}?debug=1`).then((r) => r.json())) as SessionDto;
