@@ -29,7 +29,7 @@ There is no formatter or linter gate; see `adopt-formatter-and-linter` in [../TO
 
 Hooks are the tracked scripts in `.githooks/`, wired with `git config core.hooksPath .githooks` by `bash scripts/setup.sh` (one run covers every worktree of the repository). Pre-commit only checks; it never rewrites files, and it validates the staged copy of the queue files rather than the working tree. Measured on 2026-10-09 on a warm checkout: pre-commit under one second; pre-push (`scripts/check.sh`) about five seconds. Bypassing a hook is for a broken toolchain only; state the bypass and the equivalent checks in the PR.
 
-Toolchain pins: `.nvmrc` (Node), `packageManager` in `package.json` (pnpm), `pnpm-lock.yaml` (dependencies, installed with `--frozen-lockfile`), `pnpm-workspace.yaml` (allowed build scripts: esbuild, workerd). Bumping a pin is its own PR.
+Toolchain pins: `.nvmrc` (Node), `packageManager` in `package.json` (pnpm), `pnpm-lock.yaml` (dependencies, installed with `--frozen-lockfile`), `pnpm-workspace.yaml` (allowed build scripts: esbuild, workerd; release-age gate exclusions for `wrangler` 4.149.0 and `miniflare` 5.20261006.1-alpha). Bumping a pin is its own PR.
 
 ## Test policy
 
