@@ -45,6 +45,18 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 - [CLIENT] `conversation-back-button` — **The conversation has a back button that undoes the last answer.** The spec lists one; phase 1 shipped without it and relies on Start over.
   - Source: phase-1 final review ruling, docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: `src/core/questions.ts` state is append-only (`asked`, `round2Asked`); decide whether to replay or snapshot
+- [CORE] `vegetarian-marker-wins-over-implied-protein` — **An explicit vegetarian, vegan, veggie or plant-based marker keeps the vegetarian tag and drops the meat proteins the dish name implied.** `lexicon.ts` now strips vegetarian whenever any meat protein is tagged, so "Veggie Burger" tags as beef and "Vegan Fish Tacos" as seafood, and a vegetarian pick can never surface them. No fixture is affected; real menus will be.
+  - Source: independent review of commit 825592c on phase-1-conversation-and-ranking, 2026-10-09
+  - Starting point: `src/core/lexicon.ts` vegetarian rule; only ingredient-level meat words should strip a vegetarian tag that came from ingredient words; derive the meat list from the protein keys rather than a literal
+- [CORE] `side-dish-regression-test-bite` — **The side-dish scenario test fails without the SIDE_PORTION rule, and side fixtures carry formats.** "tightening the budget never makes a side dish the dinner" passed before the fix too (fattoush outscored the sides at budget 12) and its `if (primary)` guard passes silently on null; fries and goi cuon have empty formats despite the ruling that sides carry them.
+  - Source: independent review of commit 825592c on phase-1-conversation-and-ranking, 2026-10-09
+  - Starting point: `test/core/scenarios.test.ts`; `test/core/pairs.test.ts` "never stands a small side up" is the test that does bite; `fixtures/sf.ts` fries and goi cuon
+- [CORE] `pair-feedback-covers-all-items` — **Feedback on a pair recommendation records the archetype and cuisine of every shown dish, not only the first.** `had_recently` on a pair currently penalises one dish's archetype.
+  - Source: independent review of commit 825592c on phase-1-conversation-and-ranking, 2026-10-09
+  - Starting point: `src/worker/routes/session.ts` feedback route reads `items[0]` only
+- [WORKER] `exhausted-copy-names-a-possible-action` — **The no-more-options and no-match messages tell the diner something they can actually do.** Both say "Loosen a restriction", but a recommended session rejects further answers; only Start over works.
+  - Source: independent review of commit 825592c on phase-1-conversation-and-ranking, 2026-10-09
+  - Starting point: `src/worker/routes/session.ts` no_more_options message and NO_MATCH_MESSAGE
 - [TOOLING] `adopt-formatter-and-linter` — **Decide on a formatter and linter (or neither) and, if adopted, add `scripts/fmt-check.sh` and `scripts/lint.sh` as pre-commit and CI gates.** Phase 1 chose none; adopting one reformats the whole tree, so it is a PR of its own.
   - Source: repo-workflow install, branch task/repo-workflow-install, 2026-10-09
   - Starting point: `scripts/check.sh` gate list and `docs/QUALITY.md` gate table
