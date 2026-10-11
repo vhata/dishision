@@ -3,9 +3,10 @@
 Dishision ("Make a dishision.") asks how dinner should feel, then picks the exact dish to order from a nearby restaurant and explains why. It is a personal project for the owner's household with no delivery deadline, built so a public product stays possible: provider seams, nullable session owner, coarse location only, no terms-breaking data access, and as little LLM as a good product allows. The design is [`docs/superpowers/specs/2026-10-08-dishision-design.md`](docs/superpowers/specs/2026-10-08-dishision-design.md); read it before changing behaviour.
 
 <!-- docket:begin -->
+
 ## Docket
 
-This project is run with docket. Read [docket/CONTRACT.md](docket/CONTRACT.md) before any work; it is the authoritative workflow, and this section records only this project's settings. The installer keeps this section current: the text above the list is rewritten on every run, the list keeps the values this project has set.
+This project is run with docket. Read [docket/CONTRACT.md](docket/CONTRACT.md) before any work; it is the authoritative workflow, and this section records only this project's settings. The installer keeps this section current: the text above the list is rewritten on every run, the list keeps the values this project has set, and the section may sit anywhere in this file.
 
 - Queue areas: `[CORE]` (src/core, scoring and conversation logic), `[KB]` (kb/*.json content), `[WORKER]` (src/worker, D1, routes), `[CLIENT]` (src/client), `[PROVIDERS]` (src/providers seams and implementations), `[TOOLING]` (scripts, CI, hooks, dependencies), `[DOCS]`.
 - Concurrency cap: 3 concurrent test or build runs; each worker test run starts its own workerd.
@@ -15,6 +16,7 @@ This project is run with docket. Read [docket/CONTRACT.md](docket/CONTRACT.md) b
 - Plans: `docs/superpowers/plans/YYYY-MM-DD-<slug>.md`, not `plans/`; the direct-to-main rule applies to them unchanged.
 - Shared interfaces: listed in [`ARCHITECTURE.md`](ARCHITECTURE.md#shared-interfaces); they land or are explicitly stacked before dependents start.
 - Commits: plain imperative subject, no attribution trailers or generated-with footers. The repository's git identity (personal email) is already set.
+
 <!-- docket:end -->
 
 ## Where to find what
