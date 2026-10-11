@@ -4,6 +4,12 @@ Non-obvious choices and their trade-offs, dated, newest section first. Read the 
 
 Design-level decisions (free-tier constraints, minimal LLM use, no one-way doors, Google Places terms, D1-only storage) are in the design spec and are not restated here. Task-level rulings made while implementing phase 1 are in [`superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md`](superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md).
 
+## 2026-10-11
+
+| Decision | Reason and trade-off |
+| --- | --- |
+| The generic workflow (contract, queue and review guides, validators) is vendored under `docket/` by the docket skill's `install.sh` and never edited here; `AGENTS.md` keeps only the project's settings in its marked Docket section, and the review focus areas, baseline commands and drift checks live in `docs/QUALITY.md`. | One command installs or resyncs the whole directory and `--check` reports any drift, so a fix to a validator reaches this project without a hand merge. The cost is that a project-specific rule can no longer be written into a guide; it goes in the Docket section or the quality doc, which the guides point to. |
+
 ## 2026-10-09
 
 | Decision | Reason and trade-off |

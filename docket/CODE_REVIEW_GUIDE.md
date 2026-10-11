@@ -11,7 +11,7 @@ Every PR that changes code is reviewed by an agent that did not write it, includ
 Independent review by <agent> at <commit>: <verdict>. Verified: <claims and how>. Findings: <n> (<fixed in <commit> | disposition>). Not checked: <gaps>.
 ```
 
-Focus areas for this project: the invariants in [../ARCHITECTURE.md](../ARCHITECTURE.md), in particular determinism of the ranking and trace, explanations grounded in candidate data, `src/core/` staying free of Worker, DOM and provider imports, knowledge base content staying in `kb/*.json`, coarse location only in `sessions`, Zod validation before every D1 write, and free-plan limits (no external calls in a request path without a budget guard).
+The correctness boundaries the reviewer concentrates on are listed under [What quality means here](../docs/QUALITY.md#what-quality-means-here) in `docs/QUALITY.md`.
 
 ## Ledger
 
@@ -30,7 +30,7 @@ Focus areas for this project: the invariants in [../ARCHITECTURE.md](../ARCHITEC
 | Reviewed commit | `<sha>` on main |
 | Previous review | <file> at `<sha>` / None |
 | Reviewers | <coordinator; independent agents and the areas each covered> |
-| Baseline | `bash scripts/check.sh`: <result>; `bash scripts/build.sh`: <result>; <other baseline commands>: <results> |
+| Baseline | `bash scripts/check.sh`: <result>; <each baseline command from the Review inputs in `docs/QUALITY.md`>: <result> |
 
 ## Summary
 ## Invariants
@@ -63,12 +63,7 @@ One finding is one independently fixable, verifiable problem; repeated instances
 
 ## Baseline checks
 
-Run at the reviewed commit and record exact results in the header:
-
-```bash
-bash scripts/check.sh
-bash scripts/build.sh
-```
+Run `bash scripts/check.sh` and the baseline commands listed under [Review inputs](../docs/QUALITY.md#review-inputs) in `docs/QUALITY.md` at the reviewed commit, and record exact results in the header.
 
 A check that passed at the previous review and fails now is a finding.
 
@@ -88,11 +83,11 @@ Base is the newest snapshot's reviewed commit.
 1. Baseline, recorded.
 2. Re-check every standing finding by reading current code. For merged PRs carrying `Resolves review finding: <slug>`, inspect the code at the new commit, record the new location, rerun the original reproduction (Verified) or repeat the inspection (Read). Unconfirmed closures stay Open or Moved with their backlog mapping restored.
 3. Read the whole delta against the invariants and standing findings; a new copy of a listed duplication is a finding.
-4. Mechanical checks: `bash scripts/workflow/check-links.sh`, `bash scripts/workflow/check-queues.sh --strict`, counts of lint suppressions and in-code TODO/FIXME markers, largest files, stray tracked files, and this project's drift checks: README commands and layout against `package.json` and `src/`; `kb/questions.json` round-one and round-two nodes against the design spec's lists; the spec's implementation phases against merged work; `docs/QUALITY.md` against `.githooks/`, `scripts/` and `.github/workflows/`. Compare every number with the previous snapshot.
+4. Mechanical checks: `bash docket/scripts/check-links.sh`, `bash docket/scripts/check-queues.sh --strict`, counts of lint suppressions and in-code TODO/FIXME markers, largest files, stray tracked files, and the drift checks listed under [Review inputs](../docs/QUALITY.md#review-inputs) in `docs/QUALITY.md`. Compare every number with the previous snapshot.
 5. Re-read files touched by most PRs in the delta.
 6. Review-close triage, snapshot, index row, review PR.
 
-A full review resets the baseline after a large refactor, when a hot file was rewritten, when most findings are closed and a clean baseline is wanted, when two consecutive incremental reviews each added many findings, or when `bash scripts/workflow/review-due.sh` reports source churn above a third of the codebase.
+A full review resets the baseline after a large refactor, when a hot file was rewritten, when most findings are closed and a clean baseline is wanted, when two consecutive incremental reviews each added many findings, or when `bash docket/scripts/review-due.sh` reports source churn above a third of the codebase.
 
 ## Review-close triage
 

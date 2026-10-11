@@ -2,7 +2,7 @@
 # Report how far the codebase has moved since the last recorded codebase
 # review and say whether an incremental or full review is due.
 #
-# Usage: review-due.sh [--index review/README.md] [--paths "src crates"] [--base main]
+# Usage: docket/scripts/review-due.sh [--index review/README.md] [--paths "src crates"] [--base main]
 #
 # Reads the review index for the latest review and the latest FULL review
 # (first table rows with a backticked commit), measures commits, changed files
@@ -44,7 +44,7 @@ if [ -z "$rows" ]; then
 fi
 latest="$(echo "$rows" | head -1)"
 latest_full="$(echo "$rows" | grep -iE '\|[[:space:]]*full[[:space:]]*\|' | head -1 || true)"
-field() { echo "$1" | grep -oE '`[0-9a-f]{7,40}`' | head -1 | tr -d '\`'; }
+field() { echo "$1" | { grep -oE '`[0-9a-f]{7,40}`' || true; } | head -1 | tr -d '\`'; }
 datef() { echo "$1" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1 || true; }
 rev="$(field "$latest")"; date="$(datef "$latest")"
 type="$(echo "$latest" | grep -oiE '\b(full|incremental)\b' | head -1 || echo unknown)"
@@ -81,18 +81,26 @@ del="$(echo "$stat" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+' || echo 0)"
 
 # Source lines: tracked files under --paths (or everything) minus docs, lockfiles and queue files.
 if [ -n "$paths" ]; then
-  # shellcheck disable=SC2086
-  list="$(git ls-files $paths)"
+  read -r -a source_paths <<< "$paths"
+  list="$(git ls-files -- "${source_paths[@]}")"
 else
   list="$(git ls-files)"
 fi
 src_files="$(echo "$list" | grep -Ev '(^|/)(docs|review|plans|\.github)/|\.md$|\.lock$|lock\.(json|yaml)$|\.sum$|\.svg$|\.png$|\.jpg$' || true)"
 src_lines=0
 if [ -n "$src_files" ]; then
-  src_lines="$(echo "$src_files" | tr '\n' '\0' | { xargs -0 cat 2>/dev/null || true; } | wc -l | tr -d ' ')"
+  # Count only files present in the working tree: a tracked file deleted or
+  # replaced locally must not abort the report.
+  missing="$(echo "$src_files" | while IFS= read -r f; do [ -f "$f" ] || echo x; done | wc -l | tr -d ' ')"
+  [ "$missing" -eq 0 ] || echo "note: $missing tracked source file(s) are missing from the working tree; current source lines count only the files present"
+  src_lines="$(echo "$src_files" | while IFS= read -r f; do [ -f "$f" ] && printf '%s\0' "$f"; done | { xargs -0 cat 2>/dev/null || true; } | wc -l | tr -d ' ')"
 fi
 # grep exits 1 when no source file changed; under pipefail that would abort the script.
-churn_since() { git diff --numstat "$1" "$base" -- $( [ -n "$paths" ] && echo "$paths" ) | { grep -Ev '(^|/)(docs|review|plans|\.github)/|\.md$|\.lock$|lock\.(json|yaml)$|\.sum$' || true; } | awk '{ if ($1 != "-") s += $1 } END { print s + 0 }'; }
+churn_since() {
+  {
+    if [ -n "$paths" ]; then git diff --numstat "$1" "$base" -- "${source_paths[@]}"; else git diff --numstat "$1" "$base" --; fi
+  } | { grep -Ev '(^|/)(docs|review|plans|\.github)/|\.md$|\.lock$|lock\.(json|yaml)$|\.sum$' || true; } | awk '{ if ($1 != "-") s += $1 } END { print s + 0 }'
+}
 changed_src="$(churn_since "$rev")"
 changed_since_full="$changed_src"; [ -n "$full_rev" ] && changed_since_full="$(churn_since "$full_rev")"
 

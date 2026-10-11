@@ -8,21 +8,22 @@ Read when changing code or preparing a PR. This document describes the gates as 
 - Grounded explanations: every sentence is derived from candidate data and the trace; a test exists for each way an explanation could lie (claiming an avoided quality, naming an absent ingredient).
 - Knowledge base as data: `kb/*.json` validates against the Zod schema at load, and scenario tests catch a content edit that changes a spec scenario's outcome.
 - Free-plan safety: Worker code never calls out during a request in phase 1; when real providers arrive, budget guards are tested before the provider is wired in.
+- Boundaries held: `src/core/` imports nothing from the Worker, the DOM or a provider; sessions store coarse location only; every D1 write is Zod-validated first. The invariants are listed in [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 - Deliberately manual: visual rendering of the SPA (the README checklist) and judgement about whether a recommendation is a good dinner.
 
 ## Gates
 
-Each check is a standalone script in `scripts/`, runnable from any directory, exiting non-zero on failure. Hooks, CI and agents run the same scripts.
+Each check is a standalone script in `scripts/` (this project's gates) or `docket/scripts/` (the vendored workflow validators), runnable from any directory, exiting non-zero on failure. Hooks, CI and agents run the same scripts.
 
 | Script | Runs | Pre-commit | Pre-push | CI on PR | CI on main | Scheduled |
 | --- | --- | --- | --- | --- | --- | --- |
 | `scripts/typecheck.sh` | `tsc --noEmit` for the Worker and client projects (strict, `noUncheckedIndexedAccess`) | | yes | yes | yes | yes |
 | `scripts/test.sh` | `vitest run` over the core (node), worker (workerd) and client (jsdom) projects; fails on empty collection | | yes | yes | yes | yes |
 | `scripts/build.sh` | `vite build` of the Worker and SPA into `dist/` | | | yes | yes | yes |
-| `scripts/workflow/check-queues.sh --strict` | queue hygiene | when `TODO.md` or `review/BACKLOG.md` is staged | | yes | yes | |
-| `scripts/workflow/check-pr-markers.sh` | PR markers against queues | | | yes | | |
-| `scripts/workflow/check-links.sh` | relative Markdown links | when any `.md` is staged | | yes | yes | |
-| `scripts/workflow/review-due.sh` | review cadence report | | | | | yes |
+| `docket/scripts/check-queues.sh --strict` | queue hygiene | when `TODO.md` or `review/BACKLOG.md` is staged | | | | |
+| `docket/scripts/check-links.sh` | relative Markdown links | when any `.md` is staged | | | | |
+| `docket/scripts/ci.sh` | queue hygiene, relative Markdown links and, on pull requests, PR markers against the queues | | | yes | yes | |
+| `docket/scripts/review-due.sh` | review cadence report | | | | | yes |
 | `scripts/check.sh` | typecheck, then test, stopping at the first failure | | yes | yes | yes | yes |
 
 There is no formatter or linter gate; see `adopt-formatter-and-linter` in [../TODO.md](../TODO.md).
@@ -42,7 +43,7 @@ Toolchain pins: `.nvmrc` (Node), `packageManager` in `package.json` (pnpm), `pnp
 
 ## CI
 
-`.github/workflows/ci.yml` runs on pull requests and on pushes to `main`. Jobs: `check` (setup, `scripts/check.sh`, `scripts/build.sh`) and `Queue and PR hygiene` (queue validation, link check, PR marker validation on pull requests). pnpm and Node versions come from `package.json` and `.nvmrc`. Superseded runs are cancelled on PR branches only, never on `main`. On failure, the check and build logs under `evidence/` are uploaded for 7 days.
+`.github/workflows/ci.yml` runs on pull requests and on pushes to `main`. Jobs: `check` (setup, `scripts/check.sh`, `scripts/build.sh`) and `Queue and PR hygiene` (one call to `docket/scripts/ci.sh`: queue validation, link check, PR marker validation on pull requests). pnpm and Node versions come from `package.json` and `.nvmrc`. Superseded runs are cancelled on PR branches only, never on `main`. On failure, the check and build logs under `evidence/` are uploaded for 7 days.
 
 ## Scheduled validation of main
 
@@ -60,6 +61,14 @@ Applied by the owner through the GitHub API and read back the same day.
 
 Inspect with `gh api repos/vhata/dishision/branches/main/protection` and `gh api repos/vhata/dishision --jq '{allow_squash_merge,allow_merge_commit,allow_rebase_merge,delete_branch_on_merge,squash_merge_commit_title,squash_merge_commit_message}'`.
 
+## Review inputs
+
+What the vendored review guide ([`docket/CODE_REVIEW_GUIDE.md`](../docket/CODE_REVIEW_GUIDE.md)) reads from this project.
+
+- Focus areas: the list under [What quality means here](#what-quality-means-here) and the invariants in [`ARCHITECTURE.md`](../ARCHITECTURE.md).
+- Baseline commands beyond `bash scripts/check.sh`: `bash scripts/build.sh`.
+- Drift checks for an incremental review: README commands and layout against `package.json` and `src/`; `kb/questions.json` round-one and round-two nodes against the design spec's lists; the spec's implementation phases against merged work; this document against `.githooks/`, `scripts/` and `.github/workflows/`; `bash ~/.claude/skills/docket/install.sh --check` for drift in `docket/`.
+
 ## PR evidence
 
-Every PR lists the commands run and their results, a reproducible scenario for behaviour changes, what was not run and why, and the independent review. See [CODE_REVIEW_GUIDE.md](CODE_REVIEW_GUIDE.md).
+Every PR lists the commands run and their results, a reproducible scenario for behaviour changes, what was not run and why, and the independent review. See [`docket/CODE_REVIEW_GUIDE.md`](../docket/CODE_REVIEW_GUIDE.md).

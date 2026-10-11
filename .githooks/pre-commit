@@ -19,8 +19,8 @@ if printf '%s\n' "$staged" | grep -Eq '^(TODO\.md|review/BACKLOG\.md)$'; then
     git show :review/BACKLOG.md > "$tmp/BACKLOG.md"; args="$args --backlog $tmp/BACKLOG.md"
   fi
   # shellcheck disable=SC2086
-  bash scripts/workflow/check-queues.sh --strict $args
+  bash docket/scripts/check-queues.sh --strict $args
 fi
 if printf '%s\n' "$staged" | grep -Eq '\.md$'; then
-  bash scripts/workflow/check-links.sh
+  bash docket/scripts/check-links.sh
 fi
