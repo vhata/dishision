@@ -8,6 +8,7 @@ Read when changing code or preparing a PR. This document describes the gates as 
 - Grounded explanations: every sentence is derived from candidate data and the trace; a test exists for each way an explanation could lie (claiming an avoided quality, naming an absent ingredient).
 - Knowledge base as data: `kb/*.json` validates against the Zod schema at load, and scenario tests catch a content edit that changes a spec scenario's outcome.
 - Free-plan safety: Worker code never calls out during a request in phase 1; when real providers arrive, budget guards are tested before the provider is wired in.
+- Boundaries held: `src/core/` imports nothing from the Worker, the DOM or a provider; sessions store coarse location only; every D1 write is Zod-validated first. The invariants are listed in [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 - Deliberately manual: visual rendering of the SPA (the README checklist) and judgement about whether a recommendation is a good dinner.
 
 ## Gates
@@ -64,7 +65,7 @@ Inspect with `gh api repos/vhata/dishision/branches/main/protection` and `gh api
 
 What the vendored review guide ([`docket/CODE_REVIEW_GUIDE.md`](../docket/CODE_REVIEW_GUIDE.md)) reads from this project.
 
-- Focus areas: the invariants in [`ARCHITECTURE.md`](../ARCHITECTURE.md), in particular determinism of the ranking and trace, explanations grounded in candidate data, `src/core/` staying free of Worker, DOM and provider imports, knowledge base content staying in `kb/*.json`, coarse location only in `sessions`, Zod validation before every D1 write, and free-plan limits (no external calls in a request path without a budget guard). The section above states them as policy.
+- Focus areas: the list under [What quality means here](#what-quality-means-here) and the invariants in [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 - Baseline commands beyond `bash scripts/check.sh`: `bash scripts/build.sh`.
 - Drift checks for an incremental review: README commands and layout against `package.json` and `src/`; `kb/questions.json` round-one and round-two nodes against the design spec's lists; the spec's implementation phases against merged work; this document against `.githooks/`, `scripts/` and `.github/workflows/`; `bash ~/.claude/skills/docket/install.sh --check` for drift in `docket/`.
 

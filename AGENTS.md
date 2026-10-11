@@ -14,6 +14,7 @@ This project is run with docket. Read [docket/CONTRACT.md](docket/CONTRACT.md) b
 - Environment: the user runs `pnpm dev` and the manual checklist in `README.md`. Agents verify through the test projects and, when a change needs it, a scripted API smoke against a dev server they start and stop themselves on a free port. Nothing in this repository calls an external API in phase 1; adding a real provider is its own PR with budget guards.
 - Plans: `docs/superpowers/plans/YYYY-MM-DD-<slug>.md`, not `plans/`; the direct-to-main rule applies to them unchanged.
 - Shared interfaces: listed in [`ARCHITECTURE.md`](ARCHITECTURE.md#shared-interfaces); they land or are explicitly stacked before dependents start.
+- Commits: plain imperative subject, no attribution trailers or generated-with footers. The repository's git identity (personal email) is already set.
 <!-- docket:end -->
 
 ## Where to find what
