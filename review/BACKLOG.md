@@ -1,6 +1,6 @@
 # Review backlog
 
-Only work promoted from whole-codebase reviews belongs here. Every entry is ready for separate work and carries a `Findings:` line naming the raw review findings it covers; each finding maps to at most one entry. Claiming and resolving follow [docs/TODO_GUIDE.md](../docs/TODO_GUIDE.md); promotion follows [docs/CODE_REVIEW_GUIDE.md](../docs/CODE_REVIEW_GUIDE.md).
+Only work promoted from whole-codebase reviews belongs here. Every entry is ready for separate work and carries a `Findings:` line naming the raw review findings it covers; each finding maps to at most one entry. Claiming and resolving follow [docs/TODO_GUIDE.md](../docket/TODO_GUIDE.md); promotion follows [docs/CODE_REVIEW_GUIDE.md](../docket/CODE_REVIEW_GUIDE.md).
 
 ## P0 Critical
 
@@ -52,7 +52,7 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
 - [TOOLING] `workflow-script-matching` — **The workflow scripts match markers, claims, queue structure and link arguments exactly.** Dash-bullet markers are ignored, prose is rejected as markers, claim checks match substrings and their own branch, and two validators pass on bad input.
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `marker-nearmiss-pattern`, `claim-check-branch-matching`, `queue-structure-unvalidated`, `precommit-links-read-worktree`, `check-links-missing-arg-passes`
-  - Starting point: `scripts/workflow/check-pr-markers.sh`, `claim-check.sh`, `check-queues.sh`, `check-links.sh`; `.githooks/pre-commit`; the repo-workflow skill's copies need the same fixes
+  - Starting point: the scripts under `docket/scripts/` are vendored from the docket skill, so script fixes go to the skill and arrive by resync; `.githooks/pre-commit` is this project's. The skill's current copies already reject bullet markers and match branches by whole component; re-verify each finding against them.
 - [TOOLING] `ci-revalidates-pr-body-edits` — **Editing a PR body re-runs the marker check.** The pull_request trigger uses default activity types, so the final body that becomes the squash commit is never rechecked.
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `pr-body-edit-not-revalidated`

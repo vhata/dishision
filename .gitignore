@@ -9,5 +9,3 @@ dist/
 .worktrees/
 evidence/
 test-results/
-.feral/
-AUDIT.md
