@@ -7,6 +7,11 @@ It asks a few adaptive questions about how dinner should feel, then recommends
 a specific dish or pair of dishes from a nearby restaurant, with a grounded
 explanation.
 
+Phase 1 uses curated fixture data from a dozen San Francisco restaurants in
+`fixtures/sf.ts`. Any five-digit ZIP is accepted, but recommendations use the
+same fixture area rather than your actual location. Live restaurant discovery
+and menu ingestion are planned.
+
 ## Development
 
     pnpm install
@@ -18,10 +23,6 @@ explanation.
 
     bash scripts/setup.sh   # install dependencies and the git hooks (once per clone and per new worktree)
     bash scripts/check.sh   # local gates: typecheck, then tests (CI also runs the build and the queue, link and PR-marker checks)
-
-Phase 1 runs entirely on fixture data: a dozen San Francisco restaurants in
-`fixtures/sf.ts`. Any five-digit ZIP works. Real discovery and menu ingestion
-arrive in the next plan.
 
 ## How a session works
 
@@ -65,3 +66,7 @@ Run `pnpm typecheck` then `pnpm test` (expect green), then `pnpm dev` and open t
 6. Reload on the recommendation screen: the same recommendation returns.
 
 Stop the dev server.
+
+## License
+
+[MIT](LICENSE) — Copyright (c) 2026 Jonathan Hitchcock.
