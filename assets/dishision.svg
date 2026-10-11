@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+<title id="title">Dishision</title>
+<desc id="desc">A warm copper plate holding an entree, green leaves and golden grains on a rounded ink background.</desc>
+<rect x="0" y="0" width="256" height="256" rx="56" fill="#101820" stroke="none" stroke-opacity="0" stroke-width="1"/>
+<circle cx="128" cy="128" r="88" fill="#2a2928" stroke="#f0ac7c" stroke-opacity="1" stroke-width="5"/>
+<circle cx="128" cy="128" r="69" fill="#1a2228" stroke="#ae7859" stroke-opacity="1" stroke-width="3"/>
+<polygon points="96,96 123,83 159,101 150,129 121,139 94,119" fill="#c37f55" stroke="none" stroke-opacity="0" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="102,103 123,94 147,105" fill="none" stroke="#f4c7a0" stroke-opacity="1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="106,166 81,141 81,130 108,148" fill="#94b698" stroke="none" stroke-opacity="0" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="107,168 111,135 124,141 121,165" fill="#94b698" stroke="none" stroke-opacity="0" stroke-width="1" stroke-linejoin="round"/>
+<circle cx="151" cy="151" r="10" fill="#e2be83" stroke="none" stroke-opacity="0" stroke-width="1"/>
+<circle cx="169" cy="141" r="9" fill="#e2be83" stroke="none" stroke-opacity="0" stroke-width="1"/>
+<circle cx="169" cy="161" r="9" fill="#e2be83" stroke="none" stroke-opacity="0" stroke-width="1"/>
+<circle cx="145" cy="172" r="8" fill="#e2be83" stroke="none" stroke-opacity="0" stroke-width="1"/>
+</svg>
