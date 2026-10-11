@@ -1,3 +1,5 @@
+<img src="assets/dishision.svg" alt="Dishision dinner plate logo" width="80" height="80">
+
 # Dishision
 
 Make a dishision.
