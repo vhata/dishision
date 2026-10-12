@@ -1,3 +1,5 @@
-# Whole-tree formatting commits, skipped by `git blame` (configured by
-# scripts/setup.sh) and by GitHub's blame view. One full commit SHA per line,
-# each preceded by a comment naming the change.
+# Whole-tree formatting commits, skipped by GitHub's blame view. One full
+# commit SHA per line, each preceded by a comment naming the change.
+# Locally: git blame --ignore-revs-file .git-blame-ignore-revs <path>. Setting
+# blame.ignoreRevsFile in the shared git config instead breaks git blame in
+# any worktree whose branch predates this file.

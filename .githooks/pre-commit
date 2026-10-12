@@ -26,16 +26,18 @@ if printf '%s\n' "$staged" | grep -Eq '\.md$'; then
   bash docket/scripts/check-links.sh
 fi
 
-# Format and lint the staged copies with Biome, using the staged biome.json.
-code="$(printf '%s\n' "$staged" | grep -E '\.(ts|tsx|js|mjs|cjs|json|jsonc|css)$' | grep -v '^docket/' || true)"
-if [ -n "$code" ]; then
-  biome_tmp="$(mktemp -d)"
-  trap 'rm -rf "${tmp:-}" "$biome_tmp"' EXIT
-  { echo biome.json; printf '%s\n' "$code"; } | sort -u | git checkout-index --stdin --prefix="$biome_tmp/"
+# Format and lint the staged copies with Biome. biome.json and package.json come
+# from the index too: Biome enables its React and test rules from package.json.
+biome_tmp="$(mktemp -d)"
+trap 'rm -rf "${tmp:-}" "$biome_tmp"' EXIT
+git diff --cached --name-only -z --diff-filter=ACMR -- \
+  '*.ts' '*.tsx' '*.js' '*.mjs' '*.cjs' '*.json' '*.jsonc' '*.css' ':(exclude)docket/**' > "$biome_tmp/.staged"
+if [ -s "$biome_tmp/.staged" ]; then
   biome="$PWD/node_modules/.bin/biome"
-  # shellcheck disable=SC2086
-  (cd "$biome_tmp" && "$biome" check --vcs-enabled=false --error-on-warnings --no-errors-on-unmatched $code) || {
-    echo "pre-commit: Biome found problems in the staged files; run 'pnpm fmt' and restage" >&2
+  [ -x "$biome" ] || { echo "pre-commit: Biome is not installed; run 'bash scripts/setup.sh'" >&2; exit 1; }
+  { printf 'biome.json\0package.json\0'; cat "$biome_tmp/.staged"; } | git checkout-index -f -z --stdin --prefix="$biome_tmp/"
+  (cd "$biome_tmp" && xargs -0 "$biome" check --vcs-enabled=false --error-on-warnings --no-errors-on-unmatched < .staged) || {
+    echo "pre-commit: Biome found problems in the staged files; 'pnpm fmt' fixes formatting and import order, 'pnpm lint' lists the rest" >&2
     exit 1
   }
 fi

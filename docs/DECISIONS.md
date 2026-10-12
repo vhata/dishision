@@ -12,7 +12,7 @@ Design-level decisions (free-tier constraints, minimal LLM use, no one-way doors
 | Line width 140, single quotes, semicolons, trailing commas. | Matches how phase 1 was written. At 140 the reformat touched 32 files; 100 would have touched 52 and roughly tripled the churn. |
 | The formatter skips `kb/**/*.json` and `fixtures/**`; the linter still covers them. | Those files are tables with one record per line, which is how they are read and reviewed. Formatting them would have expanded each record into a dozen or more lines for no gain in correctness. |
 | `style/noNonNullAssertion` is off. | `noUncheckedIndexedAccess` makes `!` the explicit, reviewable marker of an index the code knows is present (76 sites, most in tests). The rule would push those sites toward `as` casts or unreachable guards, which hide the same assumption less visibly. |
-| Pre-commit runs Biome on the staged copies of code files, extracted to a temporary directory with the staged `biome.json`. | The 2026-10-09 entry put code gates on push but said a formatter gate belongs on commit. Biome over a typical change takes well under a second. Checking the index rather than the working tree means a partly staged file is judged on what will be committed. |
+| Pre-commit runs Biome on the staged copies of code files, extracted to a temporary directory with the staged `biome.json` and `package.json` (Biome enables its React and test rules from `package.json`). | The 2026-10-09 entry put code gates on push but said a formatter gate belongs on commit. Biome over a typical change takes well under a second. Checking the index rather than the working tree means a partly staged file is judged on what will be committed. |
 
 ## 2026-10-11
 

@@ -24,7 +24,7 @@ Each check is a standalone script in `scripts/` (this project's gates) or `docke
 | `scripts/build.sh` | `vite build` of the Worker and SPA into `dist/` | | | yes | yes | yes |
 | `docket/scripts/check-queues.sh --strict` | queue hygiene | when `TODO.md` or `review/BACKLOG.md` is staged | | | | |
 | `docket/scripts/check-links.sh` | relative Markdown links | when any `.md` is staged | | | | |
-| `biome check` (in `.githooks/pre-commit`) | formatting, import order and lint on the staged copies, with the staged `biome.json` | when a TS, JS, JSON or CSS file outside `docket/` is staged | | | | |
+| `biome check` (in `.githooks/pre-commit`) | formatting, import order and lint on the staged copies, with the staged `biome.json` and `package.json` | when a TS, JS, JSON or CSS file outside `docket/` is staged | | | | |
 | `docket/scripts/ci.sh` | queue hygiene, relative Markdown links and, on pull requests, PR markers against the queues | | | yes | yes | |
 | `docket/scripts/review-due.sh` | review cadence report | | | | | yes |
 | `scripts/check.sh` | fmt-check, lint, typecheck, then test, stopping at the first failure | | yes | yes | yes | yes |

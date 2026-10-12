@@ -22,6 +22,11 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 
 ### Unprioritized
 
+- [TOOLING] `blame-ignore-biome-reformat` — **`.git-blame-ignore-revs` lists the squash commit that adopted Biome, so blame skips the whole-tree reformat.** The SHA only exists once that PR lands.
+  - Source: PR #9 (adopt-formatter-and-linter), 2026-10-12
+  - Blocked by: PR #9 landing on main
+  - Starting point: append the full SHA with a comment line naming the change; the contract allows this file on `main` directly only when the owner says so for the case
+
 ## Needs proof of concept
 
 ### P0 Critical
