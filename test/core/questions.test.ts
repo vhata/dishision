@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadBaseKb } from '../../src/core/kb';
-import { applyAnswer, deriveContext, initialState, nextQuestion, type AnswerInput, type ConversationState } from '../../src/core/questions';
-import { emptyPreferences, applyEffects } from '../../src/core/preferences';
+import { applyEffects, emptyPreferences } from '../../src/core/preferences';
+import { type AnswerInput, applyAnswer, type ConversationState, deriveContext, initialState, nextQuestion } from '../../src/core/questions';
 
 const kb = loadBaseKb();
 
@@ -14,7 +14,14 @@ function ask(state: ConversationState) {
 
 const roundOneComfortBeef: AnswerInput[] = [
   { kind: 'single', nodeId: 'hunger', optionId: 'normal' },
-  { kind: 'multi', nodeId: 'feel', selections: [{ optionId: 'comforting', intensity: 1 }, { optionId: 'savory', intensity: 0.5 }] },
+  {
+    kind: 'multi',
+    nodeId: 'feel',
+    selections: [
+      { optionId: 'comforting', intensity: 1 },
+      { optionId: 'savory', intensity: 0.5 },
+    ],
+  },
   { kind: 'multi', nodeId: 'protein', selections: [{ optionId: 'beef', intensity: 1 }] },
   { kind: 'scale', nodeId: 'novelty', stop: 3 },
   { kind: 'multi', nodeId: 'avoid', selections: [{ optionId: 'japanese', intensity: 1 }] },
@@ -89,7 +96,12 @@ describe('round two', () => {
       { path: 'desiredQualities.comforting', value: 1 },
       { path: 'desiredQualities.savory', value: 1 },
     ]);
-    const state: ConversationState = { ...initialState(), prefs, asked: ['hunger', 'feel', 'protein', 'novelty', 'avoid', 'brothy', 'heaviness', 'spice', 'carbs'], round2Asked: 2 };
+    const state: ConversationState = {
+      ...initialState(),
+      prefs,
+      asked: ['hunger', 'feel', 'protein', 'novelty', 'avoid', 'brothy', 'heaviness', 'spice', 'carbs'],
+      round2Asked: 2,
+    };
     const derived = deriveContext(kb, prefs);
     expect(derived.plausibleArchetypeCount).toBeGreaterThanOrEqual(5);
     const q = nextQuestion(kb, state, derived)!;
@@ -97,7 +109,12 @@ describe('round two', () => {
     expect(q.options.length).toBeGreaterThan(0);
     expect(q.options.length).toBeLessThanOrEqual(8);
     const first = q.options[0]!;
-    const next = applyAnswer(kb, state, { kind: 'multi', nodeId: 'archetype_check', selections: [{ optionId: first.id, intensity: 1 }] }, derived);
+    const next = applyAnswer(
+      kb,
+      state,
+      { kind: 'multi', nodeId: 'archetype_check', selections: [{ optionId: first.id, intensity: 1 }] },
+      derived,
+    );
     expect(next.prefs.archetypes[first.id.replace('arch:', '')]).toBe(1);
   });
 

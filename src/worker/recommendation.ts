@@ -1,7 +1,7 @@
 import { explain } from '../core/explain';
 import { withMenulessFallback } from '../core/fallback';
-import { recommend, type Recommendation } from '../core/pairs';
-import type { RecommendResponse, RecommendationDto } from '../shared/api';
+import { type Recommendation, recommend } from '../core/pairs';
+import type { RecommendationDto, RecommendResponse } from '../shared/api';
 import { insertRecommendation } from './db/recommendations';
 import type { SessionRecord } from './db/sessions';
 import type { Deps } from './deps';
@@ -13,7 +13,15 @@ function toDto(rec: Recommendation, explanation: string, debug: boolean): Recomm
   return {
     kind: rec.kind,
     restaurant: rec.restaurant,
-    items: rec.items.map((i) => ({ id: i.id, name: i.name, description: i.description, priceCents: i.priceCents, menuless: i.menuless, archetypeId: i.tags.archetypeId, cuisine: i.tags.cuisine })),
+    items: rec.items.map((i) => ({
+      id: i.id,
+      name: i.name,
+      description: i.description,
+      priceCents: i.priceCents,
+      menuless: i.menuless,
+      archetypeId: i.tags.archetypeId,
+      cuisine: i.tags.cuisine,
+    })),
     score: rec.score,
     explanation,
     menuless: rec.menuless,
@@ -34,7 +42,11 @@ export async function produceRecommendation(deps: Deps, db: D1Database, rec: Ses
         candidateRestaurants: filled.length,
         candidateItems: filled.reduce((n, c) => n + c.items.length, 0),
         rejectedItemIds: rec.state.rejectedItemIds,
-        ranked: result.ranked.slice(0, 12).map((r) => ({ label: r.items.map((i) => i.name).join(' + '), restaurant: r.restaurant.name, score: Number(r.score.toFixed(3)) })),
+        ranked: result.ranked.slice(0, 12).map((r) => ({
+          label: r.items.map((i) => i.name).join(' + '),
+          restaurant: r.restaurant.name,
+          score: Number(r.score.toFixed(3)),
+        })),
       }
     : undefined;
 

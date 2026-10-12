@@ -9,32 +9,93 @@ import type { MenuItem, RestaurantSummary } from '../../src/core/types';
 const kb = loadBaseKb();
 const ctx = { kb };
 
-const siam: RestaurantSummary = { placeId: 'siam', name: 'Siam Kitchen', cuisine: 'thai', rating: 4.5, userRatingCount: 1000, openNow: true };
+const siam: RestaurantSummary = {
+  placeId: 'siam',
+  name: 'Siam Kitchen',
+  cuisine: 'thai',
+  rating: 4.5,
+  userRatingCount: 1000,
+  openNow: true,
+};
 const tomYum: MenuItem = {
-  id: 'tomyum', placeId: 'siam', name: 'Tom Yum Shrimp', priceCents: 1400,
-  scores: { brothy: 0.95, spicy: 0.6, brightAcidic: 0.9, rich: 0.2, fresh: 0.6, savory: 0.7, proteinForward: 0.7, carbHeavy: 0.1, comforting: 0.6, portion: 0.4 },
+  id: 'tomyum',
+  placeId: 'siam',
+  name: 'Tom Yum Shrimp',
+  priceCents: 1400,
+  scores: {
+    brothy: 0.95,
+    spicy: 0.6,
+    brightAcidic: 0.9,
+    rich: 0.2,
+    fresh: 0.6,
+    savory: 0.7,
+    proteinForward: 0.7,
+    carbHeavy: 0.1,
+    comforting: 0.6,
+    portion: 0.4,
+  },
   tags: { proteins: ['seafood'], carbs: [], cuisine: 'thai', formats: ['bowl'], archetypeId: 'tom_yum' },
 };
 const beefSalad: MenuItem = {
-  id: 'beefsalad', placeId: 'siam', name: 'Grilled Beef Salad', priceCents: 1700,
-  scores: { brightAcidic: 0.9, spicy: 0.6, savory: 0.9, fresh: 0.7, rich: 0.2, proteinForward: 0.9, carbHeavy: 0.1, brothy: 0, comforting: 0.4, portion: 0.5 },
+  id: 'beefsalad',
+  placeId: 'siam',
+  name: 'Grilled Beef Salad',
+  priceCents: 1700,
+  scores: {
+    brightAcidic: 0.9,
+    spicy: 0.6,
+    savory: 0.9,
+    fresh: 0.7,
+    rich: 0.2,
+    proteinForward: 0.9,
+    carbHeavy: 0.1,
+    brothy: 0,
+    comforting: 0.4,
+    portion: 0.5,
+  },
   tags: { proteins: ['beef'], carbs: [], cuisine: 'thai', formats: ['plate'], archetypeId: 'thai_beef_salad' },
 };
 const greenCurry: MenuItem = {
-  id: 'curry', placeId: 'siam', name: 'Green Curry', priceCents: 1600,
+  id: 'curry',
+  placeId: 'siam',
+  name: 'Green Curry',
+  priceCents: 1600,
   scores: { rich: 0.8, spicy: 0.7, comforting: 0.7, savory: 0.8, carbHeavy: 0.6, brothy: 0.3, portion: 0.7 },
   tags: { proteins: ['chicken'], carbs: ['rice'], cuisine: 'thai', formats: ['plate'], archetypeId: 'green_curry' },
 };
 const padSeeEw: MenuItem = {
-  id: 'padseeew', placeId: 'siam', name: 'Pad See Ew', priceCents: 1500,
+  id: 'padseeew',
+  placeId: 'siam',
+  name: 'Pad See Ew',
+  priceCents: 1500,
   scores: { rich: 0.6, savory: 0.8, comforting: 0.7, carbHeavy: 0.85, brothy: 0, portion: 0.7 },
   tags: { proteins: ['chicken'], carbs: ['noodles'], cuisine: 'thai', formats: ['plate'], archetypeId: 'pad_thai' },
 };
 
-const phoHouse: RestaurantSummary = { placeId: 'pho', name: 'Pho House', cuisine: 'vietnamese', rating: 4.4, userRatingCount: 900, openNow: true };
+const phoHouse: RestaurantSummary = {
+  placeId: 'pho',
+  name: 'Pho House',
+  cuisine: 'vietnamese',
+  rating: 4.4,
+  userRatingCount: 900,
+  openNow: true,
+};
 const pho: MenuItem = {
-  id: 'pho', placeId: 'pho', name: 'Pho Tai', priceCents: 1600,
-  scores: { brothy: 0.95, comforting: 0.8, rich: 0.3, spicy: 0.3, brightAcidic: 0.5, savory: 0.8, proteinForward: 0.6, carbHeavy: 0.5, portion: 0.6 },
+  id: 'pho',
+  placeId: 'pho',
+  name: 'Pho Tai',
+  priceCents: 1600,
+  scores: {
+    brothy: 0.95,
+    comforting: 0.8,
+    rich: 0.3,
+    spicy: 0.3,
+    brightAcidic: 0.5,
+    savory: 0.8,
+    proteinForward: 0.6,
+    carbHeavy: 0.5,
+    portion: 0.6,
+  },
   tags: { proteins: ['beef'], carbs: ['noodles'], cuisine: 'vietnamese', formats: ['bowl'], archetypeId: 'pho' },
 };
 
@@ -65,7 +126,10 @@ describe('composePair', () => {
 
   it('never records an avoided quality as a positive signal of a pair', () => {
     const comTam: MenuItem = {
-      id: 'comtam', placeId: 'pho', name: 'Com Tam Suon', priceCents: 1700,
+      id: 'comtam',
+      placeId: 'pho',
+      name: 'Com Tam Suon',
+      priceCents: 1700,
       scores: { savory: 0.85, rich: 0.6, comforting: 0.8, carbHeavy: 0.85, proteinForward: 0.6, spicy: 0, portion: 0.8 },
       tags: { proteins: ['pork'], carbs: ['rice'], cuisine: 'vietnamese', formats: ['plate'], archetypeId: 'broken_rice' },
     };
@@ -129,7 +193,14 @@ describe('recommend', () => {
 
 describe('withMenulessFallback', () => {
   it('gives a menu-less restaurant a placeholder from its cuisine, ranked below real dishes', () => {
-    const larbHouse: RestaurantSummary = { placeId: 'larb', name: 'Larb House', cuisine: 'thai', rating: 4.8, userRatingCount: 300, openNow: true };
+    const larbHouse: RestaurantSummary = {
+      placeId: 'larb',
+      name: 'Larb House',
+      cuisine: 'thai',
+      rating: 4.8,
+      userRatingCount: 300,
+      openNow: true,
+    };
     const filled = withMenulessFallback(kb, [...candidates, { restaurant: larbHouse, items: [] }], brothBeefBright);
     const larb = filled.find((c) => c.restaurant.placeId === 'larb')!;
     expect(larb.items).toHaveLength(1);
@@ -148,7 +219,10 @@ describe('withMenulessFallback', () => {
 
 describe('side dishes', () => {
   const fries: MenuItem = {
-    id: 'fries', placeId: 'siam', name: 'Fries', priceCents: 500,
+    id: 'fries',
+    placeId: 'siam',
+    name: 'Fries',
+    priceCents: 500,
     scores: { crispy: 0.9, rich: 0.6, carbHeavy: 0.9, portion: 0.3 },
     tags: { proteins: ['vegetarian'], carbs: [], cuisine: 'thai', formats: ['side'] },
   };
@@ -158,7 +232,10 @@ describe('side dishes', () => {
     expect(primary).toBeNull();
   });
   it('still lets a small side partner a main dish', () => {
-    const prefs = applyEffects(emptyPreferences(), [{ path: 'desiredQualities.crispy', value: 1 }, { path: 'desiredQualities.brothy', value: 1 }]);
+    const prefs = applyEffects(emptyPreferences(), [
+      { path: 'desiredQualities.crispy', value: 1 },
+      { path: 'desiredQualities.brothy', value: 1 },
+    ]);
     const { ranked } = recommend([{ restaurant: siam, items: [fries, tomYum] }], prefs, ctx);
     expect(ranked.some((r) => r.kind === 'pair' && r.items.some((i) => i.id === 'fries'))).toBe(true);
     expect(ranked.some((r) => r.kind === 'single' && r.items[0]!.id === 'fries')).toBe(false);

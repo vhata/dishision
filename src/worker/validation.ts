@@ -1,5 +1,5 @@
-import { FEEDBACK_REASONS } from '../core/feedback';
 import { z } from 'zod';
+import { FEEDBACK_REASONS } from '../core/feedback';
 
 export const CreateSessionSchema = z.union([
   z.object({ zip: z.string().regex(/^\d{5}$/, 'ZIP must be five digits') }),
@@ -14,10 +14,18 @@ export const AnswerSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('multi'),
     nodeId,
-    selections: z.array(z.object({ optionId: z.string().min(1), intensity: z.union([z.literal(0.5), z.literal(1)]) })).max(20).default([]),
+    selections: z
+      .array(z.object({ optionId: z.string().min(1), intensity: z.union([z.literal(0.5), z.literal(1)]) }))
+      .max(20)
+      .default([]),
     otherText,
   }),
-  z.object({ kind: z.literal('scale'), nodeId, stop: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(), otherText }),
+  z.object({
+    kind: z.literal('scale'),
+    nodeId,
+    stop: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+    otherText,
+  }),
   z.object({ kind: z.literal('yesno'), nodeId, value: z.enum(['yes', 'no', 'either']).optional(), otherText }),
 ]);
 

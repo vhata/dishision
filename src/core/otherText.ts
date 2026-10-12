@@ -1,5 +1,15 @@
 import { z } from 'zod';
-import { BEEF_KEYS, CARB_KEYS, PROTEIN_KEYS, QUALITY_KEYS, SEAFOOD_KEYS, clamp1, type DinnerPreferences, type ProteinKey, type SeafoodKey } from './preferences';
+import {
+  BEEF_KEYS,
+  CARB_KEYS,
+  clamp1,
+  type DinnerPreferences,
+  PROTEIN_KEYS,
+  type ProteinKey,
+  QUALITY_KEYS,
+  SEAFOOD_KEYS,
+  type SeafoodKey,
+} from './preferences';
 
 const unit = z.number().min(-1).max(1);
 
@@ -38,11 +48,33 @@ export function buildOtherPrompt(text: string, nodePrompt: string, intent?: Othe
 }
 
 const CUISINE_WORDS: Record<string, string> = {
-  thai: 'thai', vietnamese: 'vietnamese', chinese: 'chinese', sichuan: 'chinese', japanese: 'japanese', korean: 'korean',
-  indian: 'indian', mexican: 'mexican', italian: 'italian', american: 'american', 'middle eastern': 'middle_eastern',
-  lebanese: 'middle_eastern', mediterranean: 'middle_eastern', greek: 'greek', hawaiian: 'hawaiian',
-  pho: 'vietnamese', 'banh mi': 'vietnamese', ramen: 'japanese', sushi: 'japanese', tacos: 'mexican', burrito: 'mexican',
-  curry: 'indian', pizza: 'italian', pasta: 'italian', shawarma: 'middle_eastern', kebab: 'middle_eastern', poke: 'hawaiian',
+  thai: 'thai',
+  vietnamese: 'vietnamese',
+  chinese: 'chinese',
+  sichuan: 'chinese',
+  japanese: 'japanese',
+  korean: 'korean',
+  indian: 'indian',
+  mexican: 'mexican',
+  italian: 'italian',
+  american: 'american',
+  'middle eastern': 'middle_eastern',
+  lebanese: 'middle_eastern',
+  mediterranean: 'middle_eastern',
+  greek: 'greek',
+  hawaiian: 'hawaiian',
+  pho: 'vietnamese',
+  'banh mi': 'vietnamese',
+  ramen: 'japanese',
+  sushi: 'japanese',
+  tacos: 'mexican',
+  burrito: 'mexican',
+  curry: 'indian',
+  pizza: 'italian',
+  pasta: 'italian',
+  shawarma: 'middle_eastern',
+  kebab: 'middle_eastern',
+  poke: 'hawaiian',
 };
 
 const PROTEIN_WORDS: [RegExp, ProteinKey, SeafoodKey?][] = [

@@ -18,7 +18,10 @@ describe('tagItem', () => {
   });
 
   it('tags a grilled beef salad as protein-forward and low starch', () => {
-    const r = tagItem(kb, { name: 'Grilled Beef Salad (Nam Tok)', description: 'Sliced grilled steak with lime, chili, mint and toasted rice powder' });
+    const r = tagItem(kb, {
+      name: 'Grilled Beef Salad (Nam Tok)',
+      description: 'Sliced grilled steak with lime, chili, mint and toasted rice powder',
+    });
     expect(r.tags.proteins).toContain('beef');
     expect(r.scores.proteinForward).toBeGreaterThanOrEqual(0.7);
     expect(r.scores.brightAcidic).toBeGreaterThanOrEqual(0.7);
@@ -51,8 +54,12 @@ describe('tagItem', () => {
 
 describe('vegetarian tagging', () => {
   it('does not call a dish vegetarian when it names meat or seafood', () => {
-    expect(tagItem(kb, { name: 'Mapo Tofu', description: 'Silken tofu and minced pork in chili bean sauce' }).tags.proteins).not.toContain('vegetarian');
-    expect(tagItem(kb, { name: 'Tom Yum Shrimp', description: 'Hot and sour soup with mushrooms' }).tags.proteins).not.toContain('vegetarian');
+    expect(tagItem(kb, { name: 'Mapo Tofu', description: 'Silken tofu and minced pork in chili bean sauce' }).tags.proteins).not.toContain(
+      'vegetarian',
+    );
+    expect(tagItem(kb, { name: 'Tom Yum Shrimp', description: 'Hot and sour soup with mushrooms' }).tags.proteins).not.toContain(
+      'vegetarian',
+    );
     expect(tagItem(kb, { name: 'Chana Masala', description: 'Chickpeas in tomato gravy' }).tags.proteins).toContain('vegetarian');
   });
 });

@@ -7,7 +7,10 @@ export interface RecommendationRow {
   feedbackReason: string | null;
 }
 
-export async function insertRecommendation(db: D1Database, row: { id: string; sessionId: string; payload: RecommendationRow['payload']; trace: unknown }): Promise<void> {
+export async function insertRecommendation(
+  db: D1Database,
+  row: { id: string; sessionId: string; payload: RecommendationRow['payload']; trace: unknown },
+): Promise<void> {
   await db
     .prepare('INSERT INTO recommendations (id, session_id, payload, trace, created_at) VALUES (?1, ?2, ?3, ?4, ?5)')
     .bind(row.id, row.sessionId, JSON.stringify(row.payload), JSON.stringify(row.trace), new Date().toISOString())

@@ -15,7 +15,7 @@ One Cloudflare Worker (Hono API) plus a React SPA served as Workers Static Asset
 - `fixtures/sf.ts`: San Francisco restaurants and menus used by tests and by the fixture candidate source.
 - `migrations/`: D1 schema, applied locally by `pnpm db:migrate` and in Worker tests by `test/worker/apply-migrations.ts`.
 - `test/core`, `test/worker`, `test/client`: the three Vitest projects (node, workerd, jsdom).
-- `scripts/`: gates (`check.sh`, `typecheck.sh`, `test.sh`, `build.sh`, `setup.sh`).
+- `scripts/`: gates (`check.sh`, `fmt-check.sh`, `lint.sh`, `typecheck.sh`, `test.sh`, `build.sh`, `setup.sh`).
 - `docket/`: the vendored docket workflow (contract, guides, scripts), never edited here; see `docket/README.md`.
 
 ## Shared interfaces

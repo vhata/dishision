@@ -33,7 +33,12 @@ export function QuestionCard({ question, busy, onSubmit, onSuggest }: Props) {
       case 'single':
         return { kind: 'single', nodeId, optionId: [...choices.keys()][0], otherText: other };
       case 'multi':
-        return { kind: 'multi', nodeId, selections: [...choices.entries()].map(([optionId, intensity]) => ({ optionId, intensity })), otherText: other };
+        return {
+          kind: 'multi',
+          nodeId,
+          selections: [...choices.entries()].map(([optionId, intensity]) => ({ optionId, intensity })),
+          otherText: other,
+        };
       case 'scale':
         return { kind: 'scale', nodeId, stop: stop as 0 | 1 | 2 | 3 | 4 | undefined, otherText: other };
       case 'yesno':
@@ -42,7 +47,9 @@ export function QuestionCard({ question, busy, onSubmit, onSuggest }: Props) {
   };
 
   const skipAnswer = (): AnswerDto =>
-    question.kind === 'multi' ? { kind: 'multi', nodeId: question.nodeId, selections: [] } : ({ kind: question.kind, nodeId: question.nodeId } as AnswerDto);
+    question.kind === 'multi'
+      ? { kind: 'multi', nodeId: question.nodeId, selections: [] }
+      : ({ kind: question.kind, nodeId: question.nodeId } as AnswerDto);
 
   const submitSuggestion = async () => {
     if (suggestText.trim().length < 2) return;
@@ -62,7 +69,13 @@ export function QuestionCard({ question, busy, onSubmit, onSuggest }: Props) {
         ) : question.kind === 'yesno' ? (
           <ChipGroup mode="single" options={YESNO} value={choices} onChange={setChoices} disabled={busy} />
         ) : (
-          <ChipGroup mode={question.kind === 'multi' ? 'multi' : 'single'} options={question.options} value={choices} onChange={setChoices} disabled={busy} />
+          <ChipGroup
+            mode={question.kind === 'multi' ? 'multi' : 'single'}
+            options={question.options}
+            value={choices}
+            onChange={setChoices}
+            disabled={busy}
+          />
         )}
       </div>
 
@@ -111,7 +124,12 @@ export function QuestionCard({ question, busy, onSubmit, onSuggest }: Props) {
         <button type="button" className="text-sm text-stone-500 hover:underline" disabled={busy} onClick={() => onSubmit(skipAnswer())}>
           Skip
         </button>
-        <button type="button" className="rounded-full bg-amber-600 px-5 py-2 font-medium text-white disabled:opacity-50" disabled={busy} onClick={() => onSubmit(buildAnswer())}>
+        <button
+          type="button"
+          className="rounded-full bg-amber-600 px-5 py-2 font-medium text-white disabled:opacity-50"
+          disabled={busy}
+          onClick={() => onSubmit(buildAnswer())}
+        >
           Continue
         </button>
       </div>

@@ -1,11 +1,7 @@
-import { getPath, type DinnerPreferences } from '../preferences';
+import { type DinnerPreferences, getPath } from '../preferences';
 
 export type RuleOp = 'gte' | 'lte' | 'eq' | 'set' | 'unset' | 'includes';
-export type Rule =
-  | { path: string; op: RuleOp; value?: number | string | boolean }
-  | { all: Rule[] }
-  | { any: Rule[] }
-  | { not: Rule };
+export type Rule = { path: string; op: RuleOp; value?: number | string | boolean } | { all: Rule[] } | { any: Rule[] } | { not: Rule };
 
 export type Derived = Record<string, unknown>;
 

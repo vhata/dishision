@@ -11,6 +11,7 @@ export function ScaleInput({ stops, value, onChange, disabled }: Props) {
       {stops.map((label, i) => {
         const selected = value === i;
         return (
+          // biome-ignore lint/a11y/useSemanticElements: styled button radio group; keyboard behaviour is tracked as conversation-accessibility in review/BACKLOG.md.
           <button
             key={label}
             type="button"

@@ -1,7 +1,7 @@
 import { evalRule, type Derived as RuleDerived } from './kb/rules';
 import type { Archetype, KnowledgeBase, QuestionNode, QuestionOption } from './kb/schema';
 import { plausibleArchetypes } from './planner';
-import { applyEffects, emptyPreferences, type DinnerPreferences } from './preferences';
+import { applyEffects, type DinnerPreferences, emptyPreferences } from './preferences';
 
 export interface ConversationState {
   prefs: DinnerPreferences;

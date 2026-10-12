@@ -22,9 +22,11 @@ and menu ingestion are planned.
 
     pnpm test            # core (node), worker (workerd) and client (jsdom) tests
     pnpm typecheck
+    pnpm fmt             # format and sort imports in place (Biome)
+    pnpm lint            # lint (Biome)
 
     bash scripts/setup.sh   # install dependencies and the git hooks (once per clone and per new worktree)
-    bash scripts/check.sh   # local gates: typecheck, then tests (CI also runs the build and the queue, link and PR-marker checks)
+    bash scripts/check.sh   # local gates: format, lint, typecheck, then tests (CI also runs the build and the queue, link and PR-marker checks)
 
 ## How a session works
 

@@ -1,6 +1,17 @@
 export const SCORE_KEYS = [
-  'comforting', 'fresh', 'rich', 'spicy', 'savory', 'brightAcidic', 'brothy', 'crispy',
-  'proteinForward', 'carbHeavy', 'adventurous', 'handheld', 'portion',
+  'comforting',
+  'fresh',
+  'rich',
+  'spicy',
+  'savory',
+  'brightAcidic',
+  'brothy',
+  'crispy',
+  'proteinForward',
+  'carbHeavy',
+  'adventurous',
+  'handheld',
+  'portion',
 ] as const;
 export type ScoreKey = (typeof SCORE_KEYS)[number];
 /** Each 0..1. Missing means unknown. */

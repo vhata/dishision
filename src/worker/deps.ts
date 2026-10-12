@@ -1,4 +1,4 @@
-import { loadBaseKb, type KnowledgeBase } from '../core/kb';
+import { type KnowledgeBase, loadBaseKb } from '../core/kb';
 import { FixtureCandidateSource } from '../providers/candidates/fixture';
 import { FixtureGeocoder } from '../providers/geocoder/fixture';
 import { FixtureLlm } from '../providers/llm/fixture';

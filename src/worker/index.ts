@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { buildDeps, type Deps } from './deps';
 import type { Env } from './env';
-import { sessionRoutes, type AppContext } from './routes/session';
+import { type AppContext, sessionRoutes } from './routes/session';
 
 export const app = new Hono<AppContext>();
 

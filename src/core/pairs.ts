@@ -1,7 +1,7 @@
 import { alignQualities } from './alignment';
 import { desiredVector } from './planner';
 import type { DinnerPreferences, Hunger } from './preferences';
-import { scoreItem, WEIGHTS, type ScoredItem, type ScoreTrace, type ScoringContext } from './scoring';
+import { type ScoredItem, type ScoreTrace, type ScoringContext, scoreItem, WEIGHTS } from './scoring';
 import type { MenuItem, RestaurantSummary, ScoreKey, Scores } from './types';
 
 /** Items with a smaller portion than this are sides: they may partner a main but never stand alone. */

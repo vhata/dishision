@@ -29,8 +29,28 @@ describe('evalRule', () => {
   });
 
   it('combines with all, any and not', () => {
-    expect(evalRule({ all: [{ path: 'hunger', op: 'set' }, { path: 'heaviness', op: 'unset' }] }, prefs)).toBe(true);
-    expect(evalRule({ any: [{ path: 'heaviness', op: 'set' }, { path: 'hunger', op: 'set' }] }, prefs)).toBe(true);
+    expect(
+      evalRule(
+        {
+          all: [
+            { path: 'hunger', op: 'set' },
+            { path: 'heaviness', op: 'unset' },
+          ],
+        },
+        prefs,
+      ),
+    ).toBe(true);
+    expect(
+      evalRule(
+        {
+          any: [
+            { path: 'heaviness', op: 'set' },
+            { path: 'hunger', op: 'set' },
+          ],
+        },
+        prefs,
+      ),
+    ).toBe(true);
     expect(evalRule({ not: { path: 'hunger', op: 'set' } }, prefs)).toBe(false);
   });
 

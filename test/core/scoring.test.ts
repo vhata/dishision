@@ -7,17 +7,60 @@ import type { MenuItem, RestaurantSummary } from '../../src/core/types';
 const kb = loadBaseKb();
 const ctx = { kb };
 
-const phoHouse: RestaurantSummary = { placeId: 'r1', name: 'Pho House', cuisine: 'vietnamese', rating: 4.5, userRatingCount: 800, openNow: true };
-const burgerBarn: RestaurantSummary = { placeId: 'r2', name: 'Burger Barn', cuisine: 'american', rating: 4.5, userRatingCount: 800, openNow: true };
+const phoHouse: RestaurantSummary = {
+  placeId: 'r1',
+  name: 'Pho House',
+  cuisine: 'vietnamese',
+  rating: 4.5,
+  userRatingCount: 800,
+  openNow: true,
+};
+const burgerBarn: RestaurantSummary = {
+  placeId: 'r2',
+  name: 'Burger Barn',
+  cuisine: 'american',
+  rating: 4.5,
+  userRatingCount: 800,
+  openNow: true,
+};
 
 const pho: MenuItem = {
-  id: 'pho', placeId: 'r1', name: 'Pho Tai', description: 'Rare beef noodle soup', priceCents: 1600,
-  scores: { brothy: 0.95, comforting: 0.8, rich: 0.3, spicy: 0.3, brightAcidic: 0.5, savory: 0.8, proteinForward: 0.6, carbHeavy: 0.5, adventurous: 0.2, handheld: 0, portion: 0.6 },
+  id: 'pho',
+  placeId: 'r1',
+  name: 'Pho Tai',
+  description: 'Rare beef noodle soup',
+  priceCents: 1600,
+  scores: {
+    brothy: 0.95,
+    comforting: 0.8,
+    rich: 0.3,
+    spicy: 0.3,
+    brightAcidic: 0.5,
+    savory: 0.8,
+    proteinForward: 0.6,
+    carbHeavy: 0.5,
+    adventurous: 0.2,
+    handheld: 0,
+    portion: 0.6,
+  },
   tags: { proteins: ['beef'], carbs: ['noodles'], cuisine: 'vietnamese', formats: ['bowl'], archetypeId: 'pho' },
 };
 const burger: MenuItem = {
-  id: 'burger', placeId: 'r2', name: 'Double Cheeseburger', priceCents: 1500,
-  scores: { rich: 0.9, comforting: 0.9, handheld: 1, savory: 0.9, proteinForward: 0.6, carbHeavy: 0.5, adventurous: 0.05, portion: 0.8, brothy: 0 },
+  id: 'burger',
+  placeId: 'r2',
+  name: 'Double Cheeseburger',
+  priceCents: 1500,
+  scores: {
+    rich: 0.9,
+    comforting: 0.9,
+    handheld: 1,
+    savory: 0.9,
+    proteinForward: 0.6,
+    carbHeavy: 0.5,
+    adventurous: 0.05,
+    portion: 0.8,
+    brothy: 0,
+  },
   tags: { proteins: ['beef'], carbs: ['bread'], cuisine: 'american', formats: ['sandwich'], archetypeId: 'burger' },
 };
 
@@ -41,7 +84,13 @@ describe('scoreItem', () => {
 
   it('penalises starch-heavy dishes when starch should stay on the side', () => {
     const prefs = applyEffects(emptyPreferences(), [{ path: 'carbs.starchAsMain', value: -1 }]);
-    const riceBowl: MenuItem = { ...burger, id: 'bowl', name: 'Rice bowl', scores: { ...burger.scores, carbHeavy: 0.85 }, tags: { ...burger.tags, carbs: ['rice'] } };
+    const riceBowl: MenuItem = {
+      ...burger,
+      id: 'bowl',
+      name: 'Rice bowl',
+      scores: { ...burger.scores, carbHeavy: 0.85 },
+      tags: { ...burger.tags, carbs: ['rice'] },
+    };
     expect(scoreItem(riceBowl, burgerBarn, prefs, ctx)!.trace.penalties.tooStarchy).toBeGreaterThan(0);
   });
 
@@ -59,7 +108,9 @@ describe('scoreItem', () => {
 
   it('discounts menuless placeholders', () => {
     const placeholder: MenuItem = { ...pho, id: 'ph', menuless: true };
-    expect(scoreItem(placeholder, phoHouse, comfortBrothBeefNotHeavy, ctx)!.score).toBeLessThan(scoreItem(pho, phoHouse, comfortBrothBeefNotHeavy, ctx)!.score);
+    expect(scoreItem(placeholder, phoHouse, comfortBrothBeefNotHeavy, ctx)!.score).toBeLessThan(
+      scoreItem(pho, phoHouse, comfortBrothBeefNotHeavy, ctx)!.score,
+    );
   });
 
   it('returns a result for empty preferences', () => {
@@ -107,7 +158,10 @@ describe('restaurantQuality and similarity', () => {
 
 describe('positive signals and avoided qualities', () => {
   it('never records an avoided quality as a positive signal', () => {
-    const prefs = applyEffects(emptyPreferences(), [{ path: 'novelty', value: -1 }, { path: 'desiredQualities.spicy', value: -1 }]);
+    const prefs = applyEffects(emptyPreferences(), [
+      { path: 'novelty', value: -1 },
+      { path: 'desiredQualities.spicy', value: -1 },
+    ]);
     const r = scoreItem(burger, burgerBarn, prefs, ctx)!;
     expect(r.trace.positiveSignals.adventurous).toBeUndefined();
     expect(r.trace.positiveSignals.spicy).toBeUndefined();

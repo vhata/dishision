@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { loadBaseKb } from '../../src/core/kb';
+import {
+  cuisineAffinity,
+  desiredVector,
+  isExcluded,
+  planQueries,
+  plausibleArchetypes,
+  proteinMatch,
+  rankArchetypes,
+} from '../../src/core/planner';
 import { applyEffects, emptyPreferences } from '../../src/core/preferences';
-import { cuisineAffinity, desiredVector, isExcluded, planQueries, plausibleArchetypes, proteinMatch, rankArchetypes } from '../../src/core/planner';
 
 const kb = loadBaseKb();
 
@@ -24,7 +32,10 @@ describe('desiredVector', () => {
   });
 
   it('does not override an explicit rich preference with heaviness', () => {
-    const p = applyEffects(emptyPreferences(), [{ path: 'desiredQualities.rich', value: 1 }, { path: 'heaviness', value: -1 }]);
+    const p = applyEffects(emptyPreferences(), [
+      { path: 'desiredQualities.rich', value: 1 },
+      { path: 'heaviness', value: -1 },
+    ]);
     expect(desiredVector(p).rich).toBe(1);
   });
 });
@@ -47,7 +58,10 @@ describe('proteinMatch and cuisineAffinity', () => {
 
 describe('isExcluded', () => {
   it('matches exclusions against any word, case-insensitively', () => {
-    const p = applyEffects(emptyPreferences(), [{ path: 'exclusions', value: 'japanese' }, { path: 'exclusions', value: 'pork' }]);
+    const p = applyEffects(emptyPreferences(), [
+      { path: 'exclusions', value: 'japanese' },
+      { path: 'exclusions', value: 'pork' },
+    ]);
     expect(isExcluded(p, ['Japanese', 'noodles'])).toBe(true);
     expect(isExcluded(p, ['thai', 'beef'])).toBe(false);
   });
@@ -55,7 +69,9 @@ describe('isExcluded', () => {
 
 describe('rankArchetypes', () => {
   it('puts brothy beef dishes first for a brothy beef profile', () => {
-    const top = rankArchetypes(kb, brothyBeef).slice(0, 4).map((r) => r.archetype.id);
+    const top = rankArchetypes(kb, brothyBeef)
+      .slice(0, 4)
+      .map((r) => r.archetype.id);
     expect(top).toContain('pho');
     expect(top).toContain('beef_noodle_soup');
     expect(top).not.toContain('burger');
