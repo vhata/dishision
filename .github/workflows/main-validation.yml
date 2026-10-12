@@ -12,6 +12,8 @@ on:
       - .github/workflows/main-validation.yml
       - docket/scripts/review-due.sh
       - scripts/check.sh
+      - scripts/fmt-check.sh
+      - scripts/lint.sh
       - scripts/typecheck.sh
       - scripts/test.sh
       - scripts/build.sh

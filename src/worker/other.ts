@@ -1,4 +1,12 @@
-import { applyPatch, buildOtherPrompt, keywordParse, otherCacheKey, PreferencePatchSchema, type OtherIntent, type PreferencePatch } from '../core/otherText';
+import {
+  applyPatch,
+  buildOtherPrompt,
+  keywordParse,
+  type OtherIntent,
+  otherCacheKey,
+  type PreferencePatch,
+  PreferencePatchSchema,
+} from '../core/otherText';
 import type { DinnerPreferences } from '../core/preferences';
 import type { Llm } from '../providers/types';
 
@@ -9,7 +17,13 @@ export interface OtherParse {
 
 export async function parseOther(llm: Llm, text: string, nodePrompt: string, intent?: OtherIntent): Promise<OtherParse> {
   const { system, prompt } = buildOtherPrompt(text, nodePrompt, intent);
-  const fromLlm = await llm.completeJson({ tier: 'large', system, prompt, schema: PreferencePatchSchema, cacheKey: `${otherCacheKey(text)}:${intent ?? 'any'}` });
+  const fromLlm = await llm.completeJson({
+    tier: 'large',
+    system,
+    prompt,
+    schema: PreferencePatchSchema,
+    cacheKey: `${otherCacheKey(text)}:${intent ?? 'any'}`,
+  });
   return fromLlm ? { source: 'llm', patch: fromLlm } : { source: 'keywords', patch: keywordParse(text, { intent }) };
 }
 

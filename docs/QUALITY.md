@@ -17,20 +17,23 @@ Each check is a standalone script in `scripts/` (this project's gates) or `docke
 
 | Script | Runs | Pre-commit | Pre-push | CI on PR | CI on main | Scheduled |
 | --- | --- | --- | --- | --- | --- | --- |
+| `scripts/fmt-check.sh` | Biome formatting and import order, read-only; `pnpm fmt` applies it | | yes | yes | yes | yes |
+| `scripts/lint.sh` | Biome lint, recommended rules plus the overrides in `biome.json`; warnings fail | | yes | yes | yes | yes |
 | `scripts/typecheck.sh` | `tsc --noEmit` for the Worker and client projects (strict, `noUncheckedIndexedAccess`) | | yes | yes | yes | yes |
 | `scripts/test.sh` | `vitest run` over the core (node), worker (workerd) and client (jsdom) projects; fails on empty collection | | yes | yes | yes | yes |
 | `scripts/build.sh` | `vite build` of the Worker and SPA into `dist/` | | | yes | yes | yes |
 | `docket/scripts/check-queues.sh --strict` | queue hygiene | when `TODO.md` or `review/BACKLOG.md` is staged | | | | |
 | `docket/scripts/check-links.sh` | relative Markdown links | when any `.md` is staged | | | | |
+| `biome check` (in `.githooks/pre-commit`) | formatting, import order and lint on the staged copies, with the staged `biome.json` and `package.json` | when a TS, JS, JSON or CSS file outside `docket/` is staged | | | | |
 | `docket/scripts/ci.sh` | queue hygiene, relative Markdown links and, on pull requests, PR markers against the queues | | | yes | yes | |
 | `docket/scripts/review-due.sh` | review cadence report | | | | | yes |
-| `scripts/check.sh` | typecheck, then test, stopping at the first failure | | yes | yes | yes | yes |
+| `scripts/check.sh` | fmt-check, lint, typecheck, then test, stopping at the first failure | | yes | yes | yes | yes |
 
-There is no formatter or linter gate; see `adopt-formatter-and-linter` in [../TODO.md](../TODO.md).
+Biome covers everything outside `docket/` (vendored) and the lockfile. The knowledge base JSON and `fixtures/` keep their one-record-per-line layout: the formatter skips them, the linter does not. Suppressions carry a reason (`// biome-ignore <rule>: <why>`).
 
-Hooks are the tracked scripts in `.githooks/`, wired with `git config core.hooksPath .githooks` by `bash scripts/setup.sh` (one run covers every worktree of the repository). Pre-commit only checks; it never rewrites files, and it validates the staged copy of the queue files rather than the working tree. Measured on 2026-10-09 on a warm checkout: pre-commit under one second; pre-push (`scripts/check.sh`) about five seconds. Bypassing a hook is for a broken toolchain only; state the bypass and the equivalent checks in the PR.
+Hooks are the tracked scripts in `.githooks/`, wired with `git config core.hooksPath .githooks` by `bash scripts/setup.sh` (one run covers every worktree of the repository). Pre-commit only checks; it never rewrites files, and it validates the staged copies of the queue and code files rather than the working tree. Measured on 2026-10-12 on a warm checkout with every code file staged: pre-commit under one second; pre-push (`scripts/check.sh`) about four seconds. Bypassing a hook is for a broken toolchain only; state the bypass and the equivalent checks in the PR.
 
-Toolchain pins: `.nvmrc` (Node), `packageManager` in `package.json` (pnpm), `pnpm-lock.yaml` (dependencies, installed with `--frozen-lockfile`), `pnpm-workspace.yaml` (allowed build scripts: esbuild, workerd; release-age gate exclusions for `wrangler` 4.149.0 and `miniflare` 5.20261006.1-alpha). Bumping a pin is its own PR.
+Toolchain pins: `.nvmrc` (Node), `packageManager` in `package.json` (pnpm), the exact `@biomejs/biome` version in `package.json` (a Biome bump can change formatting, so it lands with its own reformat), `pnpm-lock.yaml` (dependencies, installed with `--frozen-lockfile`), `pnpm-workspace.yaml` (allowed build scripts: esbuild, workerd; release-age gate exclusions for `wrangler` 4.149.0 and `miniflare` 5.20261006.1-alpha). Bumping a pin is its own PR.
 
 ## Test policy
 

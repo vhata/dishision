@@ -49,9 +49,17 @@ export async function insertSession(db: D1Database, rec: SessionRecord): Promise
        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?11)`,
     )
     .bind(
-      rec.id, rec.ownerId, rec.zipLabel, rec.lat, rec.lng,
-      JSON.stringify(rec.state.prefs), JSON.stringify(rec.state.asked), rec.state.round2Asked,
-      JSON.stringify(rec.state.rejectedItemIds), rec.status, now,
+      rec.id,
+      rec.ownerId,
+      rec.zipLabel,
+      rec.lat,
+      rec.lng,
+      JSON.stringify(rec.state.prefs),
+      JSON.stringify(rec.state.asked),
+      rec.state.round2Asked,
+      JSON.stringify(rec.state.rejectedItemIds),
+      rec.status,
+      now,
     )
     .run();
 }
@@ -67,8 +75,13 @@ export async function saveSession(db: D1Database, rec: SessionRecord): Promise<v
       `UPDATE sessions SET prefs = ?2, asked = ?3, round2_asked = ?4, rejected_item_ids = ?5, status = ?6, updated_at = ?7 WHERE id = ?1`,
     )
     .bind(
-      rec.id, JSON.stringify(rec.state.prefs), JSON.stringify(rec.state.asked), rec.state.round2Asked,
-      JSON.stringify(rec.state.rejectedItemIds), rec.status, new Date().toISOString(),
+      rec.id,
+      JSON.stringify(rec.state.prefs),
+      JSON.stringify(rec.state.asked),
+      rec.state.round2Asked,
+      JSON.stringify(rec.state.rejectedItemIds),
+      rec.status,
+      new Date().toISOString(),
     )
     .run();
 }

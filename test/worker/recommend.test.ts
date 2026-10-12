@@ -4,7 +4,11 @@ import type { RecommendResponse, SessionDto } from '../../src/shared/api';
 import { testEnv } from './env';
 
 async function post<T>(path: string, body: unknown): Promise<{ status: number; body: T }> {
-  const res = await SELF.fetch(`http://example.com${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const res = await SELF.fetch(`http://example.com${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   return { status: res.status, body: (await res.json()) as T };
 }
 
@@ -12,13 +16,36 @@ async function readySession(extraAvoid: string[] = []): Promise<string> {
   const created = await post<SessionDto>('/api/session', { zip: '94110' });
   const id = created.body.id;
   let cur = (await post<SessionDto>(`/api/session/${id}/answer`, { kind: 'single', nodeId: 'hunger', optionId: 'normal' })).body;
-  cur = (await post<SessionDto>(`/api/session/${id}/answer`, { kind: 'multi', nodeId: 'feel', selections: [{ optionId: 'comforting', intensity: 1 }] })).body;
-  cur = (await post<SessionDto>(`/api/session/${id}/answer`, { kind: 'multi', nodeId: 'protein', selections: [{ optionId: 'beef', intensity: 1 }] })).body;
+  cur = (
+    await post<SessionDto>(`/api/session/${id}/answer`, {
+      kind: 'multi',
+      nodeId: 'feel',
+      selections: [{ optionId: 'comforting', intensity: 1 }],
+    })
+  ).body;
+  cur = (
+    await post<SessionDto>(`/api/session/${id}/answer`, {
+      kind: 'multi',
+      nodeId: 'protein',
+      selections: [{ optionId: 'beef', intensity: 1 }],
+    })
+  ).body;
   cur = (await post<SessionDto>(`/api/session/${id}/answer`, { kind: 'scale', nodeId: 'novelty', stop: 2 })).body;
-  cur = (await post<SessionDto>(`/api/session/${id}/answer`, { kind: 'multi', nodeId: 'avoid', selections: extraAvoid.map((optionId) => ({ optionId, intensity: 1 as const })) })).body;
+  cur = (
+    await post<SessionDto>(`/api/session/${id}/answer`, {
+      kind: 'multi',
+      nodeId: 'avoid',
+      selections: extraAvoid.map((optionId) => ({ optionId, intensity: 1 as const })),
+    })
+  ).body;
   while (cur.question) {
     const q = cur.question;
-    const answer = q.nodeId === 'brothy' ? { kind: 'yesno', nodeId: q.nodeId, value: 'yes' } : q.nodeId === 'heaviness' ? { kind: 'scale', nodeId: q.nodeId, stop: 1 } : { kind: q.kind, nodeId: q.nodeId, ...(q.kind === 'multi' ? { selections: [] } : {}) };
+    const answer =
+      q.nodeId === 'brothy'
+        ? { kind: 'yesno', nodeId: q.nodeId, value: 'yes' }
+        : q.nodeId === 'heaviness'
+          ? { kind: 'scale', nodeId: q.nodeId, stop: 1 }
+          : { kind: q.kind, nodeId: q.nodeId, ...(q.kind === 'multi' ? { selections: [] } : {}) };
     cur = (await post<SessionDto>(`/api/session/${id}/answer`, answer)).body;
   }
   expect(cur.status).toBe('ready');
@@ -51,7 +78,18 @@ describe('POST /api/session/:id/recommend', () => {
   });
 
   it('answers with a message, not an error, when everything is excluded', async () => {
-    const id = await readySession(['japanese', 'chinese', 'thai', 'vietnamese', 'korean', 'indian', 'mexican', 'italian', 'american', 'middle_eastern']);
+    const id = await readySession([
+      'japanese',
+      'chinese',
+      'thai',
+      'vietnamese',
+      'korean',
+      'indian',
+      'mexican',
+      'italian',
+      'american',
+      'middle_eastern',
+    ]);
     const { status, body } = await post<RecommendResponse>(`/api/session/${id}/recommend`, {});
     expect(status).toBe(200);
     expect(body.primary).toBeNull();
@@ -75,7 +113,11 @@ describe('POST /api/session/:id/feedback', () => {
         seen.add(item.id);
       }
     }
-    const row = await testEnv.DB.prepare('SELECT feedback_reason FROM recommendations WHERE session_id = ?1 ORDER BY created_at ASC LIMIT 1').bind(id).first<{ feedback_reason: string }>();
+    const row = await testEnv.DB.prepare(
+      'SELECT feedback_reason FROM recommendations WHERE session_id = ?1 ORDER BY created_at ASC LIMIT 1',
+    )
+      .bind(id)
+      .first<{ feedback_reason: string }>();
     expect(row?.feedback_reason).toBe('too_heavy');
   });
 
@@ -103,7 +145,17 @@ describe('feedback details', () => {
   });
 
   it('refuses further feedback once candidates are exhausted instead of mutating preferences again', async () => {
-    const id = await readySession(['japanese', 'chinese', 'thai', 'vietnamese', 'korean', 'indian', 'mexican', 'italian', 'middle_eastern']);
+    const id = await readySession([
+      'japanese',
+      'chinese',
+      'thai',
+      'vietnamese',
+      'korean',
+      'indian',
+      'mexican',
+      'italian',
+      'middle_eastern',
+    ]);
     let res = await post<RecommendResponse>(`/api/session/${id}/recommend`, {});
     expect(res.body.primary).not.toBeNull();
     let rounds = 0;

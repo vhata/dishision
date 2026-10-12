@@ -1,7 +1,16 @@
 import { clamp1, type DinnerPreferences } from './preferences';
 
 export const FEEDBACK_REASONS = [
-  'too_heavy', 'too_light', 'too_boring', 'too_weird', 'too_spicy', 'too_expensive', 'too_much_starch', 'had_recently', 'not_that_cuisine', 'another',
+  'too_heavy',
+  'too_light',
+  'too_boring',
+  'too_weird',
+  'too_spicy',
+  'too_expensive',
+  'too_much_starch',
+  'had_recently',
+  'not_that_cuisine',
+  'another',
 ] as const;
 export type FeedbackReason = (typeof FEEDBACK_REASONS)[number];
 

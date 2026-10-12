@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { AnswerDto, SessionDto } from '../../shared/api';
-import { api, ApiRequestError } from '../api';
+import { ApiRequestError, api } from '../api';
 import { QuestionCard } from '../components/QuestionCard';
 
 interface Props {
@@ -37,7 +37,9 @@ export function Conversation({ session, onUpdate, onDecide }: Props) {
 
   return (
     <div className="mt-10">
-      <p className="mb-3 text-sm uppercase tracking-wide text-stone-500">{question.round === 1 ? 'Getting a feel for it' : 'Narrowing it down'}</p>
+      <p className="mb-3 text-sm uppercase tracking-wide text-stone-500">
+        {question.round === 1 ? 'Getting a feel for it' : 'Narrowing it down'}
+      </p>
       <QuestionCard key={question.nodeId} question={question} busy={busy} onSubmit={submit} onSuggest={suggest} />
       {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
       {question.round === 2 ? (

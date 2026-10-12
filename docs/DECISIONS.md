@@ -4,6 +4,16 @@ Non-obvious choices and their trade-offs, dated, newest section first. Read the 
 
 Design-level decisions (free-tier constraints, minimal LLM use, no one-way doors, Google Places terms, D1-only storage) are in the design spec and are not restated here. Task-level rulings made while implementing phase 1 are in [`superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md`](superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md).
 
+## 2026-10-12
+
+| Decision | Reason and trade-off |
+| --- | --- |
+| Biome (pinned exactly, 2.5.15 at adoption) is the formatter and linter, gated by `scripts/fmt-check.sh` and `scripts/lint.sh`. | The owner asked for the current consensus choice rather than the most common one. Biome is one stable tool for formatting, import sorting and linting, with type-aware rules and close Prettier compatibility, so there is one config and no ESLint plugin set to maintain. Oxlint with oxfmt is faster, but oxfmt was still 0.x; reconsider when it reaches 1.0. An exact pin because a Biome release can change formatting output. |
+| Line width 140, single quotes, semicolons, trailing commas. | Matches how phase 1 was written. At 140 the reformat touched 32 files; 100 would have touched 52 and roughly tripled the churn. |
+| The formatter skips `kb/**/*.json` and `fixtures/**`; the linter still covers them. | Those files are tables with one record per line, which is how they are read and reviewed. Formatting them would have expanded each record into a dozen or more lines for no gain in correctness. |
+| `style/noNonNullAssertion` is off. | `noUncheckedIndexedAccess` makes `!` the explicit, reviewable marker of an index the code knows is present (76 sites, most in tests). The rule would push those sites toward `as` casts or unreachable guards, which hide the same assumption less visibly. |
+| Pre-commit runs Biome on the staged copies of code files, extracted to a temporary directory with the staged `biome.json` and `package.json` (Biome enables its React and test rules from `package.json`). | The 2026-10-09 entry put code gates on push but said a formatter gate belongs on commit. Biome over a typical change takes well under a second. Checking the index rather than the working tree means a partly staged file is judged on what will be committed. |
+
 ## 2026-10-11
 
 | Decision | Reason and trade-off |

@@ -9,6 +9,8 @@
     "deploy": "vite build && wrangler deploy",
     "test": "vitest run",
     "test:watch": "vitest",
+    "fmt": "biome check --write --linter-enabled=false .",
+    "lint": "biome lint .",
     "typecheck": "tsc -p tsconfig.worker.json --noEmit && tsc -p tsconfig.client.json --noEmit",
     "db:migrate": "wrangler d1 migrations apply dishision --local",
     "db:migrate:remote": "wrangler d1 migrations apply dishision --remote"
@@ -29,6 +31,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "@cloudflare/vite-plugin": "^1.63.0",
     "@cloudflare/vitest-plugin": "^1.3.7",
     "@cloudflare/workers-types": "^5.20261008.1",

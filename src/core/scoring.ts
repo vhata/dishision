@@ -30,7 +30,12 @@ export interface ScoringContext {
 
 export type FilterReason = 'rejected' | 'excluded' | 'over_budget';
 
-export function hardFilterReason(item: MenuItem, restaurant: RestaurantSummary, prefs: DinnerPreferences, ctx: ScoringContext): FilterReason | null {
+export function hardFilterReason(
+  item: MenuItem,
+  restaurant: RestaurantSummary,
+  prefs: DinnerPreferences,
+  ctx: ScoringContext,
+): FilterReason | null {
   if (ctx.rejectedItemIds?.has(item.id)) return 'rejected';
   const words = [
     ...item.name.toLowerCase().split(/[^a-z]+/),
@@ -43,7 +48,12 @@ export function hardFilterReason(item: MenuItem, restaurant: RestaurantSummary, 
     ...item.tags.carbs,
   ];
   if (isExcluded(prefs, words)) return 'excluded';
-  if (prefs.budget.max !== undefined && !prefs.budget.flexible && item.priceCents !== undefined && item.priceCents > prefs.budget.max * 100) {
+  if (
+    prefs.budget.max !== undefined &&
+    !prefs.budget.flexible &&
+    item.priceCents !== undefined &&
+    item.priceCents > prefs.budget.max * 100
+  ) {
     return 'over_budget';
   }
   return null;

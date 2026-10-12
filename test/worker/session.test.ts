@@ -4,7 +4,11 @@ import type { SessionDto } from '../../src/shared/api';
 import { testEnv } from './env';
 
 async function post(path: string, body: unknown): Promise<Response> {
-  return SELF.fetch(`http://example.com${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  return SELF.fetch(`http://example.com${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
 }
 async function create(): Promise<SessionDto> {
   const res = await post('/api/session?debug=1', { zip: '94110' });

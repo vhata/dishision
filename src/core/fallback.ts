@@ -22,6 +22,10 @@ export function menulessItems(kb: KnowledgeBase, restaurant: RestaurantSummary, 
   ];
 }
 
-export function withMenulessFallback(kb: KnowledgeBase, candidates: RestaurantCandidatesInput[], prefs: DinnerPreferences): RestaurantCandidatesInput[] {
+export function withMenulessFallback(
+  kb: KnowledgeBase,
+  candidates: RestaurantCandidatesInput[],
+  prefs: DinnerPreferences,
+): RestaurantCandidatesInput[] {
   return candidates.map((c) => (c.items.length > 0 ? c : { ...c, items: menulessItems(kb, c.restaurant, prefs) }));
 }

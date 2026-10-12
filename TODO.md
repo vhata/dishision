@@ -22,6 +22,11 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 
 ### Unprioritized
 
+- [TOOLING] `blame-ignore-biome-reformat` — **`.git-blame-ignore-revs` lists the squash commit that adopted Biome, so blame skips the whole-tree reformat.** The SHA only exists once that PR lands.
+  - Source: PR #9 (adopt-formatter-and-linter), 2026-10-12
+  - Blocked by: PR #9 landing on main
+  - Starting point: append the full SHA with a comment line naming the change; the contract allows this file on `main` directly only when the owner says so for the case
+
 ## Needs proof of concept
 
 ### P0 Critical
@@ -44,11 +49,6 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 ### P0 Critical
 
 ### P1 High
-
-- [TOOLING] `adopt-formatter-and-linter` — **Biome formats and lints the tree, enforced by `scripts/fmt-check.sh` and `scripts/lint.sh` as pre-commit and CI gates.** Phase 1 chose none; adopting one reformats the whole tree, so it is a PR of its own and lands before parallel work starts, to keep the reformat from conflicting with open branches.
-  - Source: repo-workflow install, branch task/repo-workflow-install, 2026-10-09
-  - Starting point: `scripts/check.sh` gate list and `docs/QUALITY.md` gate table; pin `@biomejs/biome` exactly; record the choice in `docs/DECISIONS.md`; add the reformat commit to `.git-blame-ignore-revs`
-  - Triage 2026-10-12: the owner wants a formatter and linter, and the current consensus choice rather than the most common one. Biome 2.x (2.5.15 at triage) is stable and does both, with type-aware rules and close Prettier compatibility. Oxlint plus oxfmt is faster but oxfmt is still 0.x; reconsider when it reaches 1.0.
 
 ### P2 Normal
 

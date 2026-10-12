@@ -1,15 +1,15 @@
 import { Hono } from 'hono';
 import type { ZodError } from 'zod';
+import { applyFeedback } from '../../core/feedback';
 import type { KnowledgeBase } from '../../core/kb';
 import { applyAnswer, deriveContext, initialState, nextQuestion } from '../../core/questions';
 import type { QuestionDto, SessionDebug, SessionDto } from '../../shared/api';
-import { getSession, insertSession, saveSession, type SessionRecord } from '../db/sessions';
+import { latestRecommendation, setFeedback } from '../db/recommendations';
+import { getSession, insertSession, type SessionRecord, saveSession } from '../db/sessions';
 import { countSuggestions, insertSuggestion } from '../db/suggestions';
 import type { Deps } from '../deps';
 import type { Env } from '../env';
 import { applyOther, parseOther } from '../other';
-import { applyFeedback } from '../../core/feedback';
-import { latestRecommendation, setFeedback } from '../db/recommendations';
 import { produceRecommendation } from '../recommendation';
 import { AnswerSchema, CreateSessionSchema, FeedbackSchema, RecommendSchema, SuggestSchema } from '../validation';
 
@@ -33,7 +33,14 @@ export function toSessionDto(kb: KnowledgeBase, rec: SessionRecord, debug: boole
       }
     : null;
   const dto: SessionDto = { id: rec.id, zipLabel: rec.zipLabel, status: rec.status, question };
-  if (debug) dto.debug = { prefs: rec.state.prefs, asked: rec.state.asked, round2Asked: rec.state.round2Asked, rejectedItemIds: rec.state.rejectedItemIds, ...extra };
+  if (debug)
+    dto.debug = {
+      prefs: rec.state.prefs,
+      asked: rec.state.asked,
+      round2Asked: rec.state.round2Asked,
+      rejectedItemIds: rec.state.rejectedItemIds,
+      ...extra,
+    };
   return dto;
 }
 
@@ -52,7 +59,15 @@ sessionRoutes.post('/', async (c) => {
   } else {
     point = { lat: parsed.data.lat, lng: parsed.data.lng, label: 'near you' };
   }
-  const rec: SessionRecord = { id: crypto.randomUUID(), ownerId: null, zipLabel: point.label, lat: point.lat, lng: point.lng, status: 'asking', state: initialState() };
+  const rec: SessionRecord = {
+    id: crypto.randomUUID(),
+    ownerId: null,
+    zipLabel: point.label,
+    lat: point.lat,
+    lng: point.lng,
+    status: 'asking',
+    state: initialState(),
+  };
   await insertSession(c.env.DB, rec);
   return c.json(toSessionDto(kb, rec, c.req.query('debug') === '1'), 201);
 });
@@ -73,7 +88,7 @@ sessionRoutes.post('/:id/answer', async (c) => {
   const answer = parsed.data;
   const node = kb.questions.find((n) => n.id === answer.nodeId);
 
-  let state;
+  let state: SessionRecord['state'];
   try {
     state = applyAnswer(kb, rec.state, answer, deriveContext(kb, rec.state.prefs));
   } catch (err) {
@@ -81,7 +96,7 @@ sessionRoutes.post('/:id/answer', async (c) => {
   }
 
   let lastOtherParse: SessionDebug['lastOtherParse'];
-  if (answer.otherText && answer.otherText.trim()) {
+  if (answer.otherText?.trim()) {
     const parse = await parseOther(llm, answer.otherText, node?.prompt ?? '', node?.otherIntent);
     state = { ...state, prefs: applyOther(state.prefs, answer.otherText, parse) };
     lastOtherParse = { source: parse.source, patch: parse.patch };
@@ -101,7 +116,13 @@ sessionRoutes.post('/:id/suggest', async (c) => {
   if ((await countSuggestions(c.env.DB, rec.id)) >= MAX_SUGGESTIONS_PER_SESSION) {
     return c.json({ error: 'too_many_suggestions' }, 429);
   }
-  await insertSuggestion(c.env.DB, { id: crypto.randomUUID(), sessionId: rec.id, nodeId: parsed.data.nodeId, text: parsed.data.text, prefs: rec.state.prefs });
+  await insertSuggestion(c.env.DB, {
+    id: crypto.randomUUID(),
+    sessionId: rec.id,
+    nodeId: parsed.data.nodeId,
+    text: parsed.data.text,
+    prefs: rec.state.prefs,
+  });
   return c.json({ ok: true }, 202);
 });
 

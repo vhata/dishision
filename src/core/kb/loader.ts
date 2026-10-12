@@ -1,7 +1,7 @@
-import questions from '../../../kb/questions.json';
 import archetypes from '../../../kb/archetypes.json';
 import lexicon from '../../../kb/lexicon.json';
-import { KB_SCHEMA_VERSION, KbAdditionSchema, KnowledgeBaseSchema, type KnowledgeBase } from './schema';
+import questions from '../../../kb/questions.json';
+import { KB_SCHEMA_VERSION, KbAdditionSchema, type KnowledgeBase, KnowledgeBaseSchema } from './schema';
 
 export function parseKb(raw: unknown): KnowledgeBase {
   return KnowledgeBaseSchema.parse(raw);

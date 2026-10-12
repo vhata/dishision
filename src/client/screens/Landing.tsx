@@ -24,7 +24,8 @@ export function Landing({ busy, error, onStart }: Props) {
       <h1 className="text-5xl font-semibold tracking-tight">Dishision</h1>
       <p className="mt-2 text-lg text-stone-600">Make a dishision.</p>
       <p className="mx-auto mt-6 max-w-md text-stone-700">
-        You know you need dinner. You do not know what you want. A few quick questions about how dinner should feel, and you get one specific order.
+        You know you need dinner. You do not know what you want. A few quick questions about how dinner should feel, and you get one
+        specific order.
       </p>
       <form
         className="mx-auto mt-8 flex max-w-sm gap-2"
@@ -40,7 +41,11 @@ export function Landing({ busy, error, onStart }: Props) {
           value={zip}
           onChange={(e) => setZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
         />
-        <button type="submit" disabled={!valid || busy} className="rounded-full bg-amber-600 px-5 py-2 font-medium text-white disabled:opacity-50">
+        <button
+          type="submit"
+          disabled={!valid || busy}
+          className="rounded-full bg-amber-600 px-5 py-2 font-medium text-white disabled:opacity-50"
+        >
           Start
         </button>
       </form>

@@ -4,7 +4,7 @@ import { explain } from '../../src/core/explain';
 import { withMenulessFallback } from '../../src/core/fallback';
 import { loadBaseKb } from '../../src/core/kb';
 import { recommend } from '../../src/core/pairs';
-import { applyEffects, emptyPreferences, type Effect } from '../../src/core/preferences';
+import { applyEffects, type Effect, emptyPreferences } from '../../src/core/preferences';
 
 const kb = loadBaseKb();
 const candidates = fixtureCandidates(kb);
@@ -51,7 +51,12 @@ describe('Scenario A: comfort, not heavy, broth, beef, moderate spice, minimal r
     expect(text).toMatch(/broth/);
   });
   it('respects exclusions and still answers', () => {
-    const { primary } = run([...effects, { path: 'exclusions', value: 'vietnamese' }, { path: 'exclusions', value: 'chinese' }, { path: 'exclusions', value: 'korean' }]);
+    const { primary } = run([
+      ...effects,
+      { path: 'exclusions', value: 'vietnamese' },
+      { path: 'exclusions', value: 'chinese' },
+      { path: 'exclusions', value: 'korean' },
+    ]);
     expect(primary).not.toBeNull();
     expect(['vietnamese', 'chinese', 'korean']).not.toContain(primary!.restaurant.cuisine);
   });
@@ -119,13 +124,19 @@ describe('review fixes', () => {
     for (const rec of [primary!, runnerUp!]) {
       for (const item of rec.items) {
         expect(item.tags.proteins, item.name).toContain('vegetarian');
-        expect(item.tags.proteins.filter((p) => p !== 'vegetarian'), item.name).toEqual([]);
+        expect(
+          item.tags.proteins.filter((p) => p !== 'vegetarian'),
+          item.name,
+        ).toEqual([]);
       }
     }
   });
 
   it('tightening the budget never makes a side dish the dinner', () => {
-    const base = applyEffects(emptyPreferences(), [{ path: 'hunger', value: 'normal' }, { path: 'budget.max', value: 12 }]);
+    const base = applyEffects(emptyPreferences(), [
+      { path: 'hunger', value: 'normal' },
+      { path: 'budget.max', value: 12 },
+    ]);
     const { primary } = recommend(withMenulessFallback(kb, candidates, base), base, { kb });
     if (primary) for (const item of primary.items) expect(item.scores.portion ?? 1, item.name).toBeGreaterThanOrEqual(0.35);
   });

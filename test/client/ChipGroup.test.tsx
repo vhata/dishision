@@ -22,7 +22,12 @@ describe('ChipGroup multi', () => {
     const onChange = vi.fn();
     render(<ChipGroup mode="multi" options={options} value={new Map([['b', 0.5]])} onChange={onChange} />);
     fireEvent.click(screen.getByRole('button', { name: /alpha/i }));
-    expect(onChange).toHaveBeenCalledWith(new Map([['b', 0.5], ['a', 0.5]]));
+    expect(onChange).toHaveBeenCalledWith(
+      new Map([
+        ['b', 0.5],
+        ['a', 0.5],
+      ]),
+    );
     fireEvent.click(screen.getByRole('button', { name: /beta/i }));
     expect(onChange).toHaveBeenLastCalledWith(new Map([['b', 1]]));
   });

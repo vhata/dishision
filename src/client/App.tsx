@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { SessionDto } from '../shared/api';
-import { api, ApiRequestError, isDebug } from './api';
+import { ApiRequestError, api, isDebug } from './api';
 import { DebugDrawer } from './components/DebugDrawer';
 import { Conversation } from './screens/Conversation';
 import { Landing } from './screens/Landing';
@@ -20,7 +20,10 @@ export function App() {
   useEffect(() => {
     const id = sessionIdFromHash();
     if (!id) return;
-    api.getSession(id).then(setSession).catch(() => window.history.replaceState(null, '', ' '));
+    api
+      .getSession(id)
+      .then(setSession)
+      .catch(() => window.history.replaceState(null, '', ' '));
   }, []);
 
   const update = (s: SessionDto) => {
@@ -58,7 +61,9 @@ export function App() {
       ) : null}
 
       {!session ? <Landing busy={busy} error={error} onStart={start} /> : null}
-      {session?.status === 'asking' && !forceDecide ? <Conversation session={session} onUpdate={update} onDecide={() => setForceDecide(true)} /> : null}
+      {session?.status === 'asking' && !forceDecide ? (
+        <Conversation session={session} onUpdate={update} onDecide={() => setForceDecide(true)} />
+      ) : null}
       {session && (session.status !== 'asking' || forceDecide) ? (
         <Recommendation sessionId={session.id} force={forceDecide} onStartOver={reset} />
       ) : null}
