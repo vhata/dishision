@@ -73,6 +73,10 @@ const CUISINE_WORDS: Record<string, string> = {
   tacos: 'mexican',
   burrito: 'mexican',
   curry: 'indian',
+  'thai curry': 'thai',
+  'green curry': 'thai',
+  'red curry': 'thai',
+  'katsu curry': 'japanese',
   pizza: 'italian',
   pasta: 'italian',
   shawarma: 'middle_eastern',
@@ -92,10 +96,15 @@ const PROTEIN_WORDS: [RegExp, ProteinKey, SeafoodKey?][] = [
 
 /** Longest first, so a multi-word dish is claimed before any single word inside it. */
 const DISH_PHRASES = Object.keys(CUISINE_WORDS).sort((a, b) => b.length - a.length);
-/** The known dish or cuisine a meal phrase starts with, else its first word. */
+const PLURAL = '(?:e?s)?';
+/** The known dish or cuisine a meal phrase starts with, singular or plural, else its first word. */
 function mealName(phrase: string): string {
-  return DISH_PHRASES.find((w) => phrase === w || phrase.startsWith(`${w} `)) ?? phrase.split(' ')[0]!;
+  return DISH_PHRASES.find((w) => new RegExp(`^${w}${PLURAL}(?: |$)`).test(phrase)) ?? phrase.split(' ')[0]!;
 }
+/** A planned meal is one word, or two only when they make a known dish such as "hot pot". */
+const MEAL = `(?:${DISH_PHRASES.filter((w) => w.includes(' '))
+  .map((w) => w + PLURAL)
+  .join('|')}|[a-z]+)`;
 const ARTICLE = '(?:(?:a|an|the|some)\\s+)?';
 const WHEN = '(?:later this week|later|tomorrow|this week|(?:on )?(?:mon|tues|wednes|thurs|fri|satur|sun)day)';
 
@@ -140,8 +149,8 @@ export function keywordParse(text: string, opts: KeywordParseOptions = {}): Pref
     if (CUISINE_WORDS[word]) push(recent(), CUISINE_WORDS[word]!);
     working = working.replace(m[0], ' ');
   }
-  // Lazy, so a one-word meal is tried before a two-word one; "today" and "tonight" are this meal, not a later one.
-  const FUTURE = new RegExp(`\\b(?:having|getting|eating|doing)\\s+${ARTICLE}([a-z]+(?: [a-z]+)??)\\s+${WHEN}\\b`, 'g');
+  // "Today" and "tonight" are this meal, not a later one; "someday" is too vague to count as planned.
+  const FUTURE = new RegExp(`\\b(?:having|getting|eating|doing)\\s+${ARTICLE}(${MEAL})\\s+${WHEN}\\b`, 'g');
   for (const m of lower.matchAll(FUTURE)) {
     const word = mealName(m[1]!);
     push(future(), CUISINE_WORDS[word] ?? word);

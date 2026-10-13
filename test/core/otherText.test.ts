@@ -79,6 +79,33 @@ describe('keywordParse', () => {
     expect(keywordParse('having sushi friday').futureMeals).toEqual(['japanese']);
   });
 
+  it('records a plural dish as the dish and its cuisine', () => {
+    expect(keywordParse('had burritos').recentMeals).toEqual(['burrito', 'mexican']);
+    expect(keywordParse('had pizzas last night').recentMeals).toEqual(['pizza', 'italian']);
+    expect(keywordParse('had kebabs').recentMeals).toEqual(['kebab', 'middle_eastern']);
+    expect(keywordParse('having burritos tomorrow').futureMeals).toEqual(['mexican']);
+  });
+
+  it('reads only a known dish phrase as a two-word planned meal', () => {
+    const p = keywordParse('eating something light later');
+    expect(p.futureMeals).toBeUndefined();
+    expect(p.heaviness).toBe(-0.5);
+    const q = keywordParse('having something spicy tomorrow');
+    expect(q.futureMeals).toBeUndefined();
+    expect(q.desiredQualities?.spicy).toBe(0.7);
+    expect(keywordParse('having a big dinner later')).toEqual({});
+  });
+
+  it('prefers the longer of two overlapping dish phrases', () => {
+    expect(keywordParse('thai curry sounds good').cuisines).toEqual({ thai: 0.5 });
+    expect(keywordParse('had thai curry').recentMeals).toEqual(['thai curry', 'thai']);
+  });
+
+  it('does not read a vague or past day as a planned meal', () => {
+    expect(keywordParse('having pizza someday').futureMeals).toBeUndefined();
+    expect(keywordParse('having pizza yesterday').futureMeals).toBeUndefined();
+  });
+
   it('always produces a schema-valid patch', () => {
     for (const text of ['', 'asdf', 'no', 'thai thai thai', '$$$ not hungry']) {
       expect(PreferencePatchSchema.safeParse(keywordParse(text)).success).toBe(true);
