@@ -59,10 +59,6 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 
 ### P2 Normal
 
-- [CORE] `other-text-keyword-false-positives` — **The "Other" keyword parser stops reading "hot pot" as spicy, "hand-pulled noodles" as handheld, and "had a burger" as recentMeals ["a"].** Articles must be stripped and multi-word dishes matched before single words. The future-meal pattern's `\w+day` also matches "today", so "eating light today" records futureMeals ["light"] and loses the wish for something light.
-  - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
-  - Starting point: `src/core/otherText.ts` keywordParse and `test/core/otherText.test.ts`
-  - Related: `other-text-exclusions-match-items`
 - [WORKER] `recommendation-row-per-reload` — **Reloading the recommendation screen reads the latest stored recommendation instead of inserting a new row.** The screen's effect fires twice under StrictMode and every reload inserts a `recommendations` row. The two in-flight requests have no ordering guard, so the screen can show a different row from the one feedback treats as latest; harmless while fixtures are deterministic.
   - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: add `GET /api/session/:id/recommendation` in `src/worker/routes/session.ts`; have `src/client/screens/Recommendation.tsx` read before it recommends
