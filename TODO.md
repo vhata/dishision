@@ -106,9 +106,6 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 - [CLIENT] `skip-warns-about-typed-other-text` — **Skipping a question with text typed in "Other" asks before discarding it.** Skip currently drops the text silently.
   - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: `src/client/components/QuestionCard.tsx`
-- [TOOLING] `bump-vitest-to-five` — **Move to Vitest 5 as the plan specified.** Pinned to ^4.1 because the Cloudflare vitest plugin 1.3.7 supports only Vitest 4 and the worker pool failed to start under 5.
-  - Source: phase-1 Task 1 ruling, docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
-  - `@cloudflare/vitest-plugin` 1.4.0 declares `vitest: ^4.1.0 || ^5.0.0` (checked at triage, 2026-10-12), so the blocker has cleared.
 
 ### Unprioritized
 
