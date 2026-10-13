@@ -50,11 +50,13 @@ describe('unexpected errors', () => {
 });
 
 describe('deliberate HTTP errors', () => {
-  it('keep their status and message in the API error shape', async () => {
+  it('keep their status and message in the API error shape, unlogged', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = await appThrowing(new HTTPException(413, { message: 'That request is too large.' })).request('/boom');
 
     expect(res.status).toBe(413);
     expect(await res.json()).toEqual({ error: 'http_error', message: 'That request is too large.' });
+    expect(logged).not.toHaveBeenCalled();
   });
 
   it('return their own response when they carry one', async () => {
@@ -65,10 +67,22 @@ describe('deliberate HTTP errors', () => {
     expect(await res.json()).toEqual({ error: 'too_large', message: 'Trim it down.' });
   });
 
-  it('omit an empty message', async () => {
+  it('use the generic message when they have none', async () => {
     const res = await appThrowing(new HTTPException(400)).request('/boom');
 
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ error: 'http_error' });
+    expect(await res.json()).toEqual({ error: 'http_error', message: 'Something went wrong. Try again.' });
+  });
+});
+
+describe('server-side HTTP errors', () => {
+  it('keep their status but log the message instead of returning it', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const err = new HTTPException(503, { message: 'Cannot clone request: body was already consumed' });
+    const res = await appThrowing(err).request('/boom');
+
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: 'internal', message: 'Something went wrong. Try again.' });
+    expect(logged).toHaveBeenCalledWith(err);
   });
 });
