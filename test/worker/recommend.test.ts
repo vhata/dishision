@@ -144,6 +144,27 @@ describe('feedback details', () => {
     expect(session.debug?.prefs.recentMeals).toContain(first.primary!.restaurant.cuisine);
   });
 
+  it('carries every dish of a shown pair into had_recently', async () => {
+    // Fresh plus beef at a normal hunger picks a two-dish pair from the fixtures.
+    const created = await post<SessionDto>('/api/session', { zip: '94110' });
+    const id = created.body.id;
+    await post(`/api/session/${id}/answer`, { kind: 'single', nodeId: 'hunger', optionId: 'normal' });
+    await post(`/api/session/${id}/answer`, { kind: 'multi', nodeId: 'feel', selections: [{ optionId: 'fresh', intensity: 1 }] });
+    await post(`/api/session/${id}/answer`, { kind: 'multi', nodeId: 'protein', selections: [{ optionId: 'beef', intensity: 1 }] });
+    const first = (await post<RecommendResponse>(`/api/session/${id}/recommend`, { force: true })).body;
+    expect(first.primary?.kind).toBe('pair');
+    const archetypes = first.primary!.items.map((i) => i.archetypeId);
+    expect(archetypes).toHaveLength(2);
+    expect(new Set(archetypes).size).toBe(2);
+    const res = await post<RecommendResponse>(`/api/session/${id}/feedback`, { reason: 'had_recently' });
+    expect(res.status).toBe(200);
+    const session = (await SELF.fetch(`http://example.com/api/session/${id}?debug=1`).then((r) => r.json())) as SessionDto;
+    for (const item of first.primary!.items) {
+      expect(session.debug?.prefs.recentMeals).toContain(item.archetypeId);
+      expect(session.debug?.prefs.recentMeals).toContain(item.cuisine);
+    }
+  });
+
   it('refuses further feedback once candidates are exhausted instead of mutating preferences again', async () => {
     const id = await readySession([
       'japanese',
