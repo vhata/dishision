@@ -54,7 +54,7 @@
   { "pattern": "\\b(pork|carnitas|al pastor|char siu|chashu|sausage|chorizo|ham|prosciutto)\\b", "proteins": ["pork"], "scores": { "proteinForward": 0.6 } },
   { "pattern": "\\b(shrimp|prawns?|crab|lobster|clams?|mussels?|scallops?|squid|calamari|octopus|oysters?)\\b", "proteins": ["seafood"], "scores": { "proteinForward": 0.7 } },
   { "pattern": "\\b(fish|salmon|tuna|cod|halibut|snapper|branzino|mahi|tilapia|trout|bass|pescado|camarones)\\b", "proteins": ["seafood"], "scores": { "proteinForward": 0.7 } },
-  { "pattern": "\\b(tofu|tempeh|vegetables?|veggie|vegetarian|vegan|paneer|falafel|chickpeas?|lentils?|mushrooms?)\\b", "proteins": ["vegetarian"], "scores": {} },
+  { "pattern": "\\b(tofu|tempeh|vegetables?|veggie|vegetarian|vegan|plant[- ]?based|paneer|falafel|chickpeas?|lentils?|mushrooms?)\\b", "proteins": ["vegetarian"], "scores": {} },
   { "pattern": "\\b(bread|baguette|bun|naan|roti|flatbread|focaccia|ciabatta|brioche)\\b", "carbs": ["bread"], "scores": { "carbHeavy": 0.5 } },
   { "pattern": "\\btortillas?\\b", "carbs": ["tortillas"], "scores": { "carbHeavy": 0.4 } },
   { "pattern": "\\b(platter|family|feast|combo|xl|large|double|half chicken|whole chicken)\\b", "scores": { "portion": 0.9 } },
