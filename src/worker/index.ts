@@ -28,6 +28,7 @@ const GENERIC_MESSAGE = 'Something went wrong. Try again.';
  * failure: its detail (which can name tables, columns, stored data or Hono
  * internals) goes to the log only, and the client gets the generic message
  * in the same ApiError shape, with the HTTPException's status if it had one.
+ * A 5xx HTTPException's own response is discarded, not returned.
  */
 export const handleError: ErrorHandler = (err, c) => {
   if (err instanceof HTTPException && err.status < 500) {
