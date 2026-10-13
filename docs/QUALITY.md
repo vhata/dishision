@@ -8,7 +8,7 @@ Read when changing code or preparing a PR. This document describes the gates as 
 - Grounded explanations: every sentence is derived from candidate data and the trace; a test exists for each way an explanation could lie (claiming an avoided quality, naming an absent ingredient).
 - Knowledge base as data: `kb/*.json` validates against the Zod schema at load, and scenario tests catch a content edit that changes a spec scenario's outcome.
 - Free-plan safety: Worker code never calls out during a request in phase 1; when real providers arrive, budget guards are tested before the provider is wired in.
-- Boundaries held: `src/core/` imports nothing from the Worker, the DOM or a provider; sessions store coarse location only; every D1 write is Zod-validated first. The invariants are listed in [`ARCHITECTURE.md`](../ARCHITECTURE.md).
+- Boundaries held: `src/core/` imports nothing from the Worker, the DOM or a provider (enforced by the lint gate); sessions store coarse location only; every D1 write is Zod-validated first. The invariants are listed in [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 - Deliberately manual: visual rendering of the SPA (the README checklist) and judgement about whether a recommendation is a good dinner.
 
 ## Gates
@@ -18,9 +18,9 @@ Each check is a standalone script in `scripts/` (this project's gates) or `docke
 | Script | Runs | Pre-commit | Pre-push | CI on PR | CI on main | Scheduled |
 | --- | --- | --- | --- | --- | --- | --- |
 | `scripts/fmt-check.sh` | Biome formatting and import order, read-only; `pnpm fmt` applies it | | yes | yes | yes | yes |
-| `scripts/lint.sh` | Biome lint, recommended rules plus the overrides in `biome.json`; warnings fail | | yes | yes | yes | yes |
-| `scripts/typecheck.sh` | `tsc --noEmit` for the Worker and client projects (strict, `noUncheckedIndexedAccess`) | | yes | yes | yes | yes |
-| `scripts/test.sh` | `vitest run` over the core (node), worker (workerd) and client (jsdom) projects; fails on empty collection | | yes | yes | yes | yes |
+| `scripts/lint.sh` | Biome lint, recommended rules plus the overrides in `biome.json`, including the `src/core` import boundary; warnings fail | | yes | yes | yes | yes |
+| `scripts/typecheck.sh` | `tsc --noEmit` for the Worker and client projects (strict, `noUncheckedIndexedAccess`); the Worker project also covers `scripts/*.ts` | | yes | yes | yes | yes |
+| `scripts/test.sh` | `vitest run` over the core (node), worker (workerd) and client (jsdom) projects; fails when the run collects nothing or any one project runs no tests | | yes | yes | yes | yes |
 | `scripts/build.sh` | `vite build` of the Worker and SPA into `dist/` | | | yes | yes | yes |
 | `docket/scripts/check-queues.sh --strict` | queue hygiene | when `TODO.md` or `review/BACKLOG.md` is staged | | | | |
 | `docket/scripts/check-links.sh` | relative Markdown links | when any `.md` is staged | | | | |
@@ -29,7 +29,7 @@ Each check is a standalone script in `scripts/` (this project's gates) or `docke
 | `docket/scripts/review-due.sh` | review cadence report | | | | | yes |
 | `scripts/check.sh` | fmt-check, lint, typecheck, then test, stopping at the first failure | | yes | yes | yes | yes |
 
-Biome covers everything outside `docket/` (vendored) and the lockfile. The knowledge base JSON and `fixtures/` keep their one-record-per-line layout: the formatter skips them, the linter does not. Suppressions carry a reason (`// biome-ignore <rule>: <why>`).
+Biome covers everything outside `docket/` (vendored) and the lockfile. An override in `biome.json` holds the `src/core` boundary from [`ARCHITECTURE.md`](../ARCHITECTURE.md#invariants): `noRestrictedImports` rejects any path through a `worker`, `client` or `providers` directory and any package other than `zod` (Node builtins and `cloudflare:` modules included), type-only imports and re-exports too, and `noCommonJs` closes the `require` route. The allowlist is deliberate: a new package in core is a reviewed edit to `biome.json`. The rule matches import specifiers, so it does not see ambient globals such as `document` or `D1Database` used without an import, or `/// <reference types>` directives. The knowledge base JSON and `fixtures/` keep their one-record-per-line layout: the formatter skips them, the linter does not. Suppressions carry a reason (`// biome-ignore <rule>: <why>`).
 
 Hooks are the tracked scripts in `.githooks/`, wired with `git config core.hooksPath .githooks` by `bash scripts/setup.sh` (one run covers every worktree of the repository). Pre-commit only checks; it never rewrites files, and it validates the staged copies of the queue and code files rather than the working tree. Measured on 2026-10-12 on a warm checkout with every code file staged: pre-commit under one second; pre-push (`scripts/check.sh`) about four seconds. Bypassing a hook is for a broken toolchain only; state the bypass and the equivalent checks in the PR.
 
@@ -41,7 +41,7 @@ Toolchain pins: `.nvmrc` (Node), `packageManager` in `package.json` (pnpm), the 
 - A change to a route or D1 query carries a test in `test/worker/` against the real migration applied to an in-process D1.
 - A change to a component's interaction (chip cycling, scale stops) carries a `test/client/` test; pure layout changes are verified by the README checklist and say so in the PR.
 - No clock, randomness or network in `src/core/` or in tests of it; fixtures are the oracle.
-- A suite that collects no tests is a failed gate (`scripts/test.sh` passes `--passWithNoTests=false`); the gate cannot see `.skip`, so skipping a test to get green is a policy violation stated in the PR. There is no coverage threshold.
+- A suite that collects no tests is a failed gate (`scripts/test.sh` passes `--passWithNoTests=false`), and so is a project in which no test ran: with no arguments, `scripts/test.sh` adds the reporter in `scripts/vitest-project-counts.ts`, which records the passed and failed tests per project, and fails when any project's count is zero. A project whose tests are all skipped therefore fails, but the gate cannot see a single `.skip` among running tests, so skipping a test to get green is a policy violation stated in the PR. Arguments to `scripts/test.sh` go to Vitest unchanged and drop the per-project check, because file, name and `--project` filters legitimately empty some projects; hooks and CI call it without arguments. There is no coverage threshold.
 - No automatic retries. A flaky test is filed in `TODO.md` with the failing run's log and fixed or quarantined by name.
 
 ## CI
