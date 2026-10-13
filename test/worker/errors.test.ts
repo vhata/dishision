@@ -85,4 +85,15 @@ describe('server-side HTTP errors', () => {
     expect(await res.json()).toEqual({ error: 'internal', message: 'Something went wrong. Try again.' });
     expect(logged).toHaveBeenCalledWith(err);
   });
+
+  it('discard their own response, return the generic body and log', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const custom = Response.json({ error: 'upstream', message: 'D1_ERROR: no such column: secret_column' });
+    const err = new HTTPException(502, { res: custom });
+    const res = await appThrowing(err).request('/boom');
+
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: 'internal', message: 'Something went wrong. Try again.' });
+    expect(logged).toHaveBeenCalledWith(err);
+  });
 });
