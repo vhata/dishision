@@ -108,3 +108,16 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
   - `@cloudflare/vitest-plugin` 1.4.0 declares `vitest: ^4.1.0 || ^5.0.0` (checked at triage, 2026-10-12), so the blocker has cleared.
 
 ### Unprioritized
+
+- [TOOLING] `main-validation-paths-cover-reporter` — **A PR that edits only the per-project test counter runs the scheduled validation workflow.** `.github/workflows/main-validation.yml` triggers on pull requests that touch named `scripts/*.sh` files, and `scripts/vitest-project-counts.ts` is not among them.
+  - Source: review/gate-per-project-and-core-imports, 2026-10-13
+  - Starting point: the `pull_request` paths list in `.github/workflows/main-validation.yml`; consider `scripts/**`
+  - Changing CI needs the user's go-ahead when this is picked up.
+- [TOOLING] `core-globals-typecheck` — **`src/core` cannot use Worker, DOM or Node globals without an import.** The lint rule checks import specifiers only, so `fetch`, `document` or `D1Database` used as ambient globals in core pass every gate.
+  - Source: review/gate-per-project-and-core-imports, 2026-10-13
+  - Starting point: a core-only tsconfig (ES2022 lib, no DOM, `types: []`, its own `jsx` setting so `@types/react` globals stay out) added to `scripts/typecheck.sh`
+  - It fails today on `structuredClone`, which is not in the ES2022 lib: `src/core/feedback.ts`, `src/core/kb/loader.ts`, `src/core/otherText.ts` and `src/core/preferences.ts`. Either declare that one global in a core ambient file or replace the calls.
+- [TOOLING] `core-type-position-imports` — **Type-position imports into Worker, client, provider or package code fail the core lint rule.** `type T = import('hono').Context` and `typeof import('../worker/env')` pass Biome's `noRestrictedImports`.
+  - Source: review/gate-per-project-and-core-imports, 2026-10-13
+  - Starting point: a Biome GritQL plugin matching `TsImportType()` in the `src/core/**` override caught all three probes on the branch; `.githooks/pre-commit` copies only `biome.json`, `package.json` and staged files into its temp directory, so it must also copy `*.grit` or every commit fails with "Cannot read file"
+  - Changing hooks needs the user's go-ahead when this is picked up.
