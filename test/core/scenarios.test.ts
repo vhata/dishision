@@ -50,6 +50,29 @@ describe('Scenario A: comfort, not heavy, broth, beef, moderate spice, minimal r
     expect(text).toContain(primary!.items[0]!.name);
     expect(text).toMatch(/broth/);
   });
+  it('compares the runner-up and names a skipped dish only as far as their traces support', () => {
+    const { primary, runnerUp, ranked, prefs } = run(effects);
+    const text = explain(primary!, prefs, runnerUp, ranked);
+    // The runner-up matches beef as well as the pick; the old template still said it had "a little less the protein you asked for".
+    expect(text).not.toMatch(/less the protein/);
+
+    const reason = text.match(/Runner-up: [^.]*, (?:not as (\w+)|a close second|the next best fit)\./);
+    expect(reason, text).not.toBeNull();
+    if (reason?.[1]) {
+      const key = ({ brothy: 'brothy', bright: 'brightAcidic', spicy: 'spicy', comforting: 'comforting', savory: 'savory' } as const)[
+        reason[1] as 'brothy'
+      ];
+      const best = (r: typeof primary) => Math.max(...r!.items.map((i) => i.scores[key] ?? Number.NaN));
+      expect(best(runnerUp) + 0.1, text).toBeLessThanOrEqual(best(primary) + 1e-9);
+    }
+
+    const skipped = text.match(/Skipped (.+) at ([^:]+): /);
+    expect(skipped, text).not.toBeNull();
+    const named = ranked.find((r) => r.items.map((i) => i.name).join(' plus ') === skipped![1] && r.restaurant.name === skipped![2]);
+    expect(named, skipped![0]).toBeDefined();
+    const worst = Math.max(...Object.values(named!.trace.penalties));
+    expect(named!.score + worst).toBeGreaterThan(primary!.score);
+  });
   it('respects exclusions and still answers', () => {
     const { primary } = run([
       ...effects,
