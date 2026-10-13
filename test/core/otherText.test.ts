@@ -36,6 +36,49 @@ describe('keywordParse', () => {
     expect(p.budgetMax).toBe(25);
   });
 
+  it('reads multi-word dishes as dishes before reading their words', () => {
+    const p = keywordParse('hot pot sounds perfect');
+    expect(p.desiredQualities?.spicy).toBeUndefined();
+    expect(p.cuisines?.chinese).toBeGreaterThan(0);
+    const q = keywordParse('maybe a hot dog');
+    expect(q.desiredQualities?.spicy).toBeUndefined();
+    expect(q.cuisines?.american).toBeGreaterThan(0);
+    expect(keywordParse('something hot').desiredQualities?.spicy).toBeGreaterThan(0);
+  });
+
+  it('does not read a hand- compound as wanting something handheld', () => {
+    const p = keywordParse('hand-pulled noodles would be great');
+    expect(p.handheld).toBeUndefined();
+    expect(p.carbs?.noodles).toBeGreaterThan(0);
+    expect(keywordParse('something hand-held').handheld).toBeGreaterThan(0);
+    expect(keywordParse('something I can eat with my hands').handheld).toBeGreaterThan(0);
+  });
+
+  it('skips articles when recording meals', () => {
+    const p = keywordParse('had a burger last night');
+    expect(p.recentMeals).toEqual(['burger']);
+    expect(p.handheld).toBeUndefined();
+    const q = keywordParse('we are having the pizza tomorrow');
+    expect(q.futureMeals).toEqual(['italian']);
+    expect(q.cuisines).toBeUndefined();
+  });
+
+  it('records multi-word meals whole', () => {
+    const p = keywordParse('I had hot pot on Saturday');
+    expect(p.recentMeals).toEqual(['hot pot', 'chinese']);
+    expect(p.desiredQualities?.spicy).toBeUndefined();
+    const q = keywordParse('getting banh mi tomorrow');
+    expect(q.futureMeals).toEqual(['vietnamese']);
+  });
+
+  it('reads today as tonight, not as a planned meal', () => {
+    const p = keywordParse('eating light today');
+    expect(p.futureMeals).toBeUndefined();
+    expect(p.heaviness).toBeLessThan(0);
+    expect(keywordParse('having sushi on Friday').futureMeals).toEqual(['japanese']);
+    expect(keywordParse('having sushi friday').futureMeals).toEqual(['japanese']);
+  });
+
   it('always produces a schema-valid patch', () => {
     for (const text of ['', 'asdf', 'no', 'thai thai thai', '$$$ not hungry']) {
       expect(PreferencePatchSchema.safeParse(keywordParse(text)).success).toBe(true);
