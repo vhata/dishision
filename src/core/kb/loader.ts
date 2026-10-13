@@ -2,9 +2,14 @@ import archetypes from '../../../kb/archetypes.json';
 import lexicon from '../../../kb/lexicon.json';
 import questions from '../../../kb/questions.json';
 import { KB_SCHEMA_VERSION, KbAdditionSchema, type KnowledgeBase, KnowledgeBaseSchema } from './schema';
+import { kbIssues } from './validate';
 
+/** Parses and semantically validates a base knowledge base, throwing with every problem found. */
 export function parseKb(raw: unknown): KnowledgeBase {
-  return KnowledgeBaseSchema.parse(raw);
+  const kb = KnowledgeBaseSchema.parse(raw);
+  const issues = kbIssues(kb);
+  if (issues.length > 0) throw new Error(`knowledge base failed validation:\n${issues.map((i) => `- ${i}`).join('\n')}`);
+  return kb;
 }
 
 let cached: KnowledgeBase | undefined;
