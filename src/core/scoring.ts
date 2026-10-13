@@ -1,6 +1,6 @@
 import { alignQualities } from './alignment';
 import type { KnowledgeBase } from './kb/schema';
-import { cuisineAffinity, desiredVector, isExcluded, proteinMatch } from './planner';
+import { cuisineAffinity, desiredVector, isExcluded, knownCuisines, proteinMatch } from './planner';
 import type { DinnerPreferences, Hunger } from './preferences';
 import type { MenuItem, RestaurantSummary, Scores } from './types';
 
@@ -37,17 +37,11 @@ export function hardFilterReason(
   ctx: ScoringContext,
 ): FilterReason | null {
   if (ctx.rejectedItemIds?.has(item.id)) return 'rejected';
-  const words = [
-    ...item.name.toLowerCase().split(/[^a-z]+/),
-    ...(item.description ?? '').toLowerCase().split(/[^a-z]+/),
-    item.tags.cuisine,
-    restaurant.cuisine,
-    item.tags.archetypeId,
-    ...item.tags.proteins,
-    ...item.tags.formats,
-    ...item.tags.carbs,
-  ];
-  if (isExcluded(prefs, words)) return 'excluded';
+  const target = {
+    cuisines: [item.tags.cuisine, restaurant.cuisine],
+    text: [item.name, item.description, item.tags.archetypeId, ...item.tags.proteins, ...item.tags.formats, ...item.tags.carbs],
+  };
+  if (isExcluded(prefs, target, knownCuisines(ctx.kb))) return 'excluded';
   if (
     prefs.budget.max !== undefined &&
     !prefs.budget.flexible &&

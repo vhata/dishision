@@ -4,6 +4,7 @@ import {
   cuisineAffinity,
   desiredVector,
   isExcluded,
+  knownCuisines,
   planQueries,
   plausibleArchetypes,
   proteinMatch,
@@ -57,13 +58,64 @@ describe('proteinMatch and cuisineAffinity', () => {
 });
 
 describe('isExcluded', () => {
-  it('matches exclusions against any word, case-insensitively', () => {
-    const p = applyEffects(emptyPreferences(), [
-      { path: 'exclusions', value: 'japanese' },
-      { path: 'exclusions', value: 'pork' },
-    ]);
-    expect(isExcluded(p, ['Japanese', 'noodles'])).toBe(true);
-    expect(isExcluded(p, ['thai', 'beef'])).toBe(false);
+  const cuisines = knownCuisines(kb);
+  const excluding = (...values: string[]) =>
+    applyEffects(
+      emptyPreferences(),
+      values.map((value) => ({ path: 'exclusions', value })),
+    );
+
+  it('matches exclusions against cuisine tags and words, case-insensitively', () => {
+    const p = excluding('japanese', 'pork');
+    expect(isExcluded(p, { cuisines: ['Japanese'], text: ['noodles'] }, cuisines)).toBe(true);
+    expect(isExcluded(p, { cuisines: ['thai'], text: ['Pork belly'] }, cuisines)).toBe(true);
+    expect(isExcluded(p, { cuisines: ['thai'], text: ['beef'] }, cuisines)).toBe(false);
+  });
+
+  it('matches a cuisine exclusion against cuisine tags only, not words in the text', () => {
+    const p = excluding('chinese', 'american');
+    expect(isExcluded(p, { cuisines: ['thai'], text: ['Pad See Ew', 'Rice noodles with Chinese broccoli'] }, cuisines)).toBe(false);
+    expect(isExcluded(p, { cuisines: ['korean'], text: ['Bulgogi melt', 'American cheese on a hoagie'] }, cuisines)).toBe(false);
+    expect(isExcluded(p, { cuisines: [undefined, 'chinese'], text: ['Pad See Ew'] }, cuisines)).toBe(true);
+  });
+
+  it('matches cuisine tags exactly, not as substrings', () => {
+    expect(isExcluded(excluding('eastern'), { cuisines: ['middle_eastern'], text: [] }, cuisines)).toBe(false);
+  });
+
+  it('matches other exclusions as whole words, not substrings', () => {
+    const p = excluding('fish');
+    expect(isExcluded(p, { cuisines: [], text: ['Shellfish platter', 'Shrimp, clams and mussels'] }, cuisines)).toBe(false);
+    expect(isExcluded(p, { cuisines: [], text: ['Catfish po boy'] }, cuisines)).toBe(false);
+    expect(isExcluded(p, { cuisines: [], text: ['Fish tacos'] }, cuisines)).toBe(true);
+    expect(isExcluded(p, { cuisines: [], text: ['fish_tacos'] }, cuisines)).toBe(true);
+  });
+
+  it('accepts a plural of the excluded word', () => {
+    const p = excluding('mushroom', 'tomato');
+    expect(isExcluded(p, { cuisines: [], text: ['Sauteed mushrooms'] }, cuisines)).toBe(true);
+    expect(isExcluded(p, { cuisines: [], text: ['Roast tomatoes'] }, cuisines)).toBe(true);
+  });
+
+  it('matches a multi-word exclusion as a phrase', () => {
+    const p = excluding('blue cheese');
+    expect(isExcluded(p, { cuisines: [], text: ['Wedge salad with Blue Cheese dressing'] }, cuisines)).toBe(true);
+    expect(isExcluded(p, { cuisines: [], text: ['Blue corn tortilla, cheese'] }, cuisines)).toBe(false);
+  });
+
+  it('scans text for an exclusion the knowledge base does not know as a cuisine', () => {
+    const p = excluding('french');
+    expect(cuisines.has('french')).toBe(false);
+    expect(isExcluded(p, { cuisines: ['french'], text: [] }, cuisines)).toBe(true);
+    expect(isExcluded(p, { cuisines: ['american'], text: ['French onion soup'] }, cuisines)).toBe(true);
+  });
+});
+
+describe('knownCuisines', () => {
+  it('collects the cuisines archetypes and lexicon entries are tagged with', () => {
+    const cuisines = knownCuisines(kb);
+    for (const c of ['chinese', 'american', 'middle_eastern', 'greek', 'hawaiian']) expect(cuisines.has(c)).toBe(true);
+    expect(cuisines.has('fried')).toBe(false);
   });
 });
 
@@ -80,6 +132,13 @@ describe('rankArchetypes', () => {
   it('drops excluded cuisines entirely', () => {
     const p = applyEffects(brothyBeef, [{ path: 'exclusions', value: 'vietnamese' }]);
     expect(rankArchetypes(kb, p).map((r) => r.archetype.id)).not.toContain('pho');
+  });
+
+  it('drops archetypes whose label, id or tags name an excluded word', () => {
+    const ids = rankArchetypes(kb, applyEffects(emptyPreferences(), [{ path: 'exclusions', value: 'fish' }])).map((r) => r.archetype.id);
+    expect(ids).not.toContain('fish_tacos');
+    expect(ids).not.toContain('grilled_fish');
+    expect(ids).toContain('pho');
   });
 
   it('boosts archetypes the user reacted to', () => {

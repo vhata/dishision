@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { fixtureCandidates } from '../../fixtures/sf';
 import { loadBaseKb } from '../../src/core/kb';
 import { applyEffects, emptyPreferences } from '../../src/core/preferences';
 import { hardFilterReason, restaurantQuality, scoreItem, similarity } from '../../src/core/scoring';
@@ -127,6 +128,40 @@ describe('hardFilterReason', () => {
     expect(hardFilterReason(pho, phoHouse, noViet, ctx)).toBe('excluded');
     expect(hardFilterReason({ ...burger, name: 'Fried Chicken Sandwich' }, burgerBarn, noFried, ctx)).toBe('excluded');
     expect(hardFilterReason(burger, burgerBarn, noViet, ctx)).toBeNull();
+  });
+
+  it('keeps a dish whose description names an excluded cuisine', () => {
+    const siam = fixtureCandidates(kb).find((c) => c.restaurant.placeId === 'siam_kitchen')!;
+    const padSeeEw = siam.items.find((i) => i.id === 'siam_pad_see_ew')!;
+    expect(padSeeEw.description).toMatch(/Chinese broccoli/);
+    const noChinese = applyEffects(emptyPreferences(), [{ path: 'exclusions', value: 'chinese' }]);
+    expect(hardFilterReason(padSeeEw, siam.restaurant, noChinese, ctx)).toBeNull();
+
+    const melt: MenuItem = {
+      ...burger,
+      id: 'melt',
+      name: 'Bulgogi Melt',
+      description: 'Bulgogi and American cheese',
+      tags: { ...burger.tags, cuisine: 'korean' },
+    };
+    const seoul: RestaurantSummary = { ...burgerBarn, placeId: 'r3', name: 'Seoul Garden', cuisine: 'korean' };
+    const noAmerican = applyEffects(emptyPreferences(), [{ path: 'exclusions', value: 'american' }]);
+    expect(hardFilterReason(melt, seoul, noAmerican, ctx)).toBeNull();
+    expect(hardFilterReason(melt, burgerBarn, noAmerican, ctx)).toBe('excluded');
+    expect(hardFilterReason({ ...melt, tags: { ...melt.tags, cuisine: 'american' } }, seoul, noAmerican, ctx)).toBe('excluded');
+  });
+
+  it('matches ingredient exclusions as whole words in the name and description', () => {
+    const noFish = applyEffects(emptyPreferences(), [{ path: 'exclusions', value: 'fish' }]);
+    const platter: MenuItem = {
+      ...pho,
+      id: 'platter',
+      name: 'Shellfish Platter',
+      description: 'Shrimp, clams and mussels',
+      tags: { ...pho.tags, archetypeId: undefined },
+    };
+    expect(hardFilterReason(platter, phoHouse, noFish, ctx)).toBeNull();
+    expect(hardFilterReason({ ...platter, description: 'Shrimp, clams and a whole fish' }, phoHouse, noFish, ctx)).toBe('excluded');
   });
 
   it('filters over-budget items unless the budget is flexible', () => {

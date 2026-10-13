@@ -28,10 +28,63 @@ export function cuisineAffinity(prefs: DinnerPreferences, cuisine: string | unde
   return prefs.cuisines[cuisine] ?? 0;
 }
 
-export function isExcluded(prefs: DinnerPreferences, words: readonly (string | undefined)[]): boolean {
+const cuisineCache = new WeakMap<KnowledgeBase, ReadonlySet<string>>();
+
+/** Every cuisine an archetype or lexicon entry is tagged with; an exclusion in this set is a cuisine exclusion. */
+export function knownCuisines(kb: KnowledgeBase): ReadonlySet<string> {
+  let set = cuisineCache.get(kb);
+  if (!set) {
+    set = new Set([...kb.archetypes.map((a) => a.cuisine), ...kb.lexicon.flatMap((e) => (e.cuisine ? [e.cuisine] : []))]);
+    cuisineCache.set(kb, set);
+  }
+  return set;
+}
+
+export interface ExclusionTarget {
+  /** Cuisine tags, compared whole. */
+  cuisines: readonly (string | undefined)[];
+  /** Names, descriptions and non-cuisine tags, scanned for whole words and phrases. */
+  text: readonly (string | undefined)[];
+}
+
+function words(s: string): string[] {
+  return s
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
+}
+
+/** True when `phrase` occurs as consecutive whole words in `ws`; the last word may take a plural s or es. */
+function hasPhrase(ws: readonly string[], phrase: readonly string[]): boolean {
+  const last = phrase.length - 1;
+  for (let i = 0; i + last < ws.length; i++) {
+    const hit = phrase.every((p, j) => {
+      const w = ws[i + j];
+      return w === p || (j === last && (w === `${p}s` || w === `${p}es`));
+    });
+    if (hit) return true;
+  }
+  return false;
+}
+
+/**
+ * An exclusion that is a known cuisine matches cuisine tags only, so "chinese" does not drop a dish
+ * described with Chinese broccoli. Any other exclusion matches a cuisine tag exactly or a whole word
+ * or phrase in the text, so "fish" does not drop shellfish.
+ */
+export function isExcluded(prefs: DinnerPreferences, target: ExclusionTarget, cuisines: ReadonlySet<string>): boolean {
   if (prefs.exclusions.length === 0) return false;
-  const lowered = words.filter((w): w is string => !!w).map((w) => w.toLowerCase());
-  return prefs.exclusions.some((ex) => lowered.some((w) => w === ex || w.includes(ex)));
+  const tags = new Set(target.cuisines.filter((c): c is string => !!c).map((c) => c.toLowerCase()));
+  let texts: string[][] | undefined;
+  return prefs.exclusions.some((raw) => {
+    const ex = raw.toLowerCase();
+    if (tags.has(ex)) return true;
+    if (cuisines.has(ex)) return false;
+    const phrase = words(ex);
+    if (phrase.length === 0) return false;
+    texts ??= target.text.filter((t): t is string => !!t).map(words);
+    return texts.some((ws) => hasPhrase(ws, phrase));
+  });
 }
 
 export interface RankedArchetype {
@@ -42,8 +95,8 @@ export interface RankedArchetype {
 
 export const ARCHETYPE_WEIGHTS = { align: 0.6, protein: 0.25, cuisine: 0.15, liked: 0.3, carbAvoid: 0.2 } as const;
 
-export function scoreArchetype(a: Archetype, prefs: DinnerPreferences): RankedArchetype | null {
-  if (isExcluded(prefs, [a.cuisine, a.id, a.label, ...a.proteins, ...a.formats])) return null;
+export function scoreArchetype(a: Archetype, prefs: DinnerPreferences, cuisines: ReadonlySet<string>): RankedArchetype | null {
+  if (isExcluded(prefs, { cuisines: [a.cuisine], text: [a.id, a.label, ...a.proteins, ...a.formats] }, cuisines)) return null;
   const align = alignQualities(desiredVector(prefs), a.scores);
   const protein = proteinMatch(prefs, a.proteins);
   const cuisine = (cuisineAffinity(prefs, a.cuisine) + 1) / 2;
@@ -61,8 +114,9 @@ export function scoreArchetype(a: Archetype, prefs: DinnerPreferences): RankedAr
 }
 
 export function rankArchetypes(kb: KnowledgeBase, prefs: DinnerPreferences): RankedArchetype[] {
+  const cuisines = knownCuisines(kb);
   return kb.archetypes
-    .map((a) => scoreArchetype(a, prefs))
+    .map((a) => scoreArchetype(a, prefs, cuisines))
     .filter((r): r is RankedArchetype => r !== null)
     .sort((x, y) => y.score - x.score);
 }
