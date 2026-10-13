@@ -18,22 +18,24 @@ app.route('/api/session', sessionRoutes);
 
 app.notFound((c) => c.json({ error: 'not_found' }, 404));
 
+const GENERIC_MESSAGE = 'Something went wrong. Try again.';
+
 /**
  * Routes return their client-facing errors directly; anything that reaches
- * here was thrown. An HTTPException is a deliberate client-facing error and
- * keeps its status and message, or its own response when it carries one.
- * Any other error is unexpected: its detail (which can name tables, columns
- * or stored data) goes to the log only, and the client gets a generic body
- * in the same ApiError shape.
+ * here was thrown. A 4xx HTTPException is a deliberate client-facing error
+ * and keeps its status and message (the generic one when it has none), or
+ * its own response when it carries one. Everything else is a server-side
+ * failure: its detail (which can name tables, columns, stored data or Hono
+ * internals) goes to the log only, and the client gets the generic message
+ * in the same ApiError shape, with the HTTPException's status if it had one.
  */
 export const handleError: ErrorHandler = (err, c) => {
-  if (err instanceof HTTPException) {
-    if (err.status >= 500) console.error(err);
+  if (err instanceof HTTPException && err.status < 500) {
     if (err.res) return err.getResponse();
-    return c.json({ error: 'http_error', message: err.message || undefined }, err.status);
+    return c.json({ error: 'http_error', message: err.message || GENERIC_MESSAGE }, err.status);
   }
   console.error(err);
-  return c.json({ error: 'internal', message: 'Something went wrong. Try again.' }, 500);
+  return c.json({ error: 'internal', message: GENERIC_MESSAGE }, err instanceof HTTPException ? err.status : 500);
 };
 app.onError(handleError);
 
