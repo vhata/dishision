@@ -4,7 +4,17 @@
  * references and ids resolve. A knowledge base that passes these checks
  * cannot make tagging or answering throw.
  */
-import { BEEF_KEYS, CARB_KEYS, type Hunger, type Leftovers, PROTEIN_KEYS, QUALITY_KEYS, SEAFOOD_KEYS } from '../preferences';
+import {
+  BEEF_KEYS,
+  CARB_KEYS,
+  type DinnerPreferences,
+  type Hunger,
+  type Leftovers,
+  PROTEIN_KEYS,
+  QUALITY_KEYS,
+  SEAFOOD_KEYS,
+} from '../preferences';
+import type { Derived } from '../questions';
 import type { Rule } from './rules';
 import type { Archetype, KnowledgeBase, LexiconEntry, QuestionNode, QuestionOption } from './schema';
 
@@ -15,12 +25,44 @@ export type FieldSpec =
   | { kind: 'enum'; values: readonly string[] }
   | { kind: 'list' }
   /** A record of numbers. `keys` closes the record; `archetypes` keys must name an archetype. */
-  | { kind: 'record'; keys?: readonly string[] };
+  | { kind: 'record'; keys?: readonly string[] }
+  /** A value rules can only test with set or unset. */
+  | { kind: 'opaque' };
 
-const HUNGER = ['light', 'normal', 'very_hungry'] as const satisfies readonly Hunger[];
-const LEFTOVERS = ['want', 'avoid', 'indifferent'] as const satisfies readonly Leftovers[];
+/** The spec a value of type V must have, so a spec that disagrees with its type fails to compile. */
+type SpecFor<V> = [V] extends [number]
+  ? { kind: 'number' }
+  : [V] extends [string]
+    ? { kind: 'enum'; values: readonly V[] }
+    : [V] extends [string[]]
+      ? { kind: 'list' }
+      : [V] extends [Record<string, number>]
+        ? string extends keyof V
+          ? { kind: 'record' }
+          : { kind: 'record'; keys: readonly (keyof V)[] }
+        : { kind: 'opaque' };
 
-/** The shape of `DinnerPreferences` as effects and rules may address it. */
+/** Keys of T without its index signature. */
+type KnownKeys<T> = keyof { [K in keyof T as string extends K ? never : number extends K ? never : K]: T[K] };
+
+/** Exactly one spec per field of T, each matching the field's type. */
+type SpecsFor<T> = { [K in KnownKeys<T>]-?: SpecFor<NonNullable<T[K]>> };
+
+/** Returns `values`, failing to compile unless they list every member of T. */
+const every =
+  <T extends string>() =>
+  <const V extends readonly T[]>(values: V & ([Exclude<T, V[number]>] extends [never] ? unknown : { missing: Exclude<T, V[number]> })) =>
+    values;
+
+const HUNGER = every<Hunger>()(['light', 'normal', 'very_hungry']);
+const LEFTOVERS = every<Leftovers>()(['want', 'avoid', 'indifferent']);
+const BUDGET_KEYS = every<keyof DinnerPreferences['budget']>()(['max', 'flexible']);
+
+/**
+ * The shape of `DinnerPreferences` as effects and rules may address it. The
+ * `satisfies` clause makes tsc reject a field added to, renamed in or retyped in
+ * the interface without a matching entry here.
+ */
 export const PREFERENCE_FIELDS: Readonly<Record<string, FieldSpec>> = {
   hunger: { kind: 'enum', values: HUNGER },
   desiredQualities: { kind: 'record', keys: QUALITY_KEYS },
@@ -35,21 +77,29 @@ export const PREFERENCE_FIELDS: Readonly<Record<string, FieldSpec>> = {
   novelty: { kind: 'number' },
   handheld: { kind: 'number' },
   leftovers: { kind: 'enum', values: LEFTOVERS },
-  budget: { kind: 'record', keys: ['max', 'flexible'] },
+  budget: { kind: 'record', keys: BUDGET_KEYS },
   recentMeals: { kind: 'list' },
   futureMeals: { kind: 'list' },
   exclusions: { kind: 'list' },
   notes: { kind: 'list' },
-};
+} satisfies SpecsFor<DinnerPreferences>;
 
-/** Values rules can read under `derived.`; kept in step with `deriveContext` by a test. */
-export const DERIVED_KEYS = ['plausibleArchetypes', 'plausibleArchetypeCount'] as const;
+/** Values rules can read under `derived.`, checked against `Derived` from questions.ts the same way. */
+export const DERIVED_FIELDS: Readonly<Record<string, FieldSpec>> = {
+  plausibleArchetypes: { kind: 'opaque' },
+  plausibleArchetypeCount: { kind: 'number' },
+} satisfies SpecsFor<Derived>;
 
 /** Ids starting with this belong to overlay rows. */
 export const OVERLAY_PREFIX = 'kb_';
 
 /** What a path resolves to once its field and key are known. */
-type Target = { kind: 'number' } | { kind: 'enum'; field: string; values: readonly string[] } | { kind: 'list' } | { kind: 'record' };
+type Target =
+  | { kind: 'number' }
+  | { kind: 'enum'; field: string; values: readonly string[] }
+  | { kind: 'list' }
+  | { kind: 'record' }
+  | { kind: 'opaque' };
 
 export interface ValidationContext {
   archetypeIds: ReadonlySet<string>;
@@ -64,7 +114,7 @@ function resolvePath(path: string, ctx: ValidationContext): Target | string {
   const parts = path.split('.');
   const [field, key] = parts;
   if (parts.length > 2 || !field || key === '') return `bad path ${path}`;
-  const spec = PREFERENCE_FIELDS[field];
+  const spec = Object.hasOwn(PREFERENCE_FIELDS, field) ? PREFERENCE_FIELDS[field] : undefined;
   if (!spec) return `unknown preference field ${field}`;
   if (spec.kind === 'record') {
     if (key === undefined) return { kind: 'record' };
@@ -77,11 +127,23 @@ function resolvePath(path: string, ctx: ValidationContext): Target | string {
   return spec;
 }
 
+/** Resolves a rule path, which may also read a derived value. */
+function resolveRulePath(path: string, ctx: ValidationContext): Target | string {
+  if (!path.startsWith('derived.')) return resolvePath(path, ctx);
+  const key = path.slice('derived.'.length);
+  const spec = Object.hasOwn(DERIVED_FIELDS, key) ? DERIVED_FIELDS[key] : undefined;
+  if (!spec) return `unknown derived value ${key}`;
+  if (spec.kind === 'enum') return { kind: 'enum', field: path, values: spec.values };
+  return spec;
+}
+
 export function effectIssues(effect: Effect, ctx: ValidationContext): string[] {
   const { path, op, value } = effect;
   const target = resolvePath(path, ctx);
   if (typeof target === 'string') return [target];
   switch (target.kind) {
+    case 'opaque':
+      return [`${path} cannot be written`];
     case 'record':
       return [`${path} needs a key`];
     case 'list':
@@ -104,13 +166,7 @@ export function ruleIssues(rule: Rule, ctx: ValidationContext, where: string): s
   if ('not' in rule) return ruleIssues(rule.not, ctx, `${where}.not`);
   const fail = (msg: string) => [`${where}: ${msg}`];
   const { path, op, value } = rule;
-  if (path.startsWith('derived.')) {
-    const key = path.slice('derived.'.length);
-    if (!(DERIVED_KEYS as readonly string[]).includes(key)) return fail(`unknown derived value ${key}`);
-    if ((op === 'gte' || op === 'lte') && typeof value !== 'number') return fail(`${op} needs a number`);
-    return [];
-  }
-  const target = resolvePath(path, ctx);
+  const target = resolveRulePath(path, ctx);
   if (typeof target === 'string') return fail(target);
   switch (op) {
     case 'set':
@@ -122,11 +178,11 @@ export function ruleIssues(rule: Rule, ctx: ValidationContext, where: string): s
       return typeof value === 'number' ? [] : fail(`${op} needs a number`);
     case 'eq':
       if (value === undefined) return fail('eq needs a value');
+      if (target.kind === 'list' || target.kind === 'record' || target.kind === 'opaque') return fail(`eq cannot compare ${path}`);
       if (target.kind === 'enum' && !target.values.includes(String(value))) {
         return fail(`${target.field} must be one of ${target.values.join(', ')}`);
       }
       if (target.kind === 'number' && typeof value !== 'number') return fail(`eq on ${path} needs a number`);
-      if (target.kind === 'list' || target.kind === 'record') return fail(`eq cannot compare ${path}`);
       return [];
     case 'includes':
       if (target.kind !== 'list') return fail(`includes needs a list field, ${path} is not one`);
