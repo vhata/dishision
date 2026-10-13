@@ -44,7 +44,6 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `suggest-nodeid-unbounded`, `malformed-json-treated-as-empty-object`, `order-links-unvalidated-scheme`
   - Starting point: `src/worker/validation.ts`; `src/worker/routes/session.ts` body parsing; `src/worker/links.ts`
-  - Related: `error-handler-leaks-message`
 - [TOOLING] `gate-per-project-and-core-imports` — **The gates fail when any one test project collects nothing, and when `src/core` imports Worker, DOM or provider code.** Both are documented policy with no enforcement; each was shown to pass silently.
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `empty-test-project-passes`, `core-import-invariant-unenforced`
