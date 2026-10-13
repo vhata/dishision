@@ -18,8 +18,11 @@ fi
 counts="$(mktemp)"
 trap 'rm -f "$counts"' EXIT
 
+# Naming any reporter drops the ones Vitest adds by default, so the
+# github-actions reporter (inline annotations on GitHub Actions) is named here.
 TEST_PROJECT_COUNTS_FILE="$counts" pnpm exec vitest run --passWithNoTests=false \
-  --reporter=default --reporter=./scripts/vitest-project-counts.ts
+  --reporter=default ${GITHUB_ACTIONS:+--reporter=github-actions} \
+  --reporter=./scripts/vitest-project-counts.ts
 
 node -e '
 const raw = require("node:fs").readFileSync(process.argv[1], "utf8");
