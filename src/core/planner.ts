@@ -41,50 +41,24 @@ export function knownCuisines(kb: KnowledgeBase): ReadonlySet<string> {
 }
 
 export interface ExclusionTarget {
-  /** Cuisine tags, compared whole. */
+  /** The dish's and restaurant's cuisine tags. */
   cuisines: readonly (string | undefined)[];
-  /** Names, descriptions and non-cuisine tags, scanned for whole words and phrases. */
+  /** Words and other tags that non-cuisine exclusions are matched against. */
   text: readonly (string | undefined)[];
 }
 
-function words(s: string): string[] {
-  return s
-    .toLowerCase()
-    .split(/[^\p{L}\p{N}]+/u)
-    .filter(Boolean);
-}
-
-/** True when `phrase` occurs as consecutive whole words in `ws`; the last word may take a plural s or es. */
-function hasPhrase(ws: readonly string[], phrase: readonly string[]): boolean {
-  const last = phrase.length - 1;
-  for (let i = 0; i + last < ws.length; i++) {
-    const hit = phrase.every((p, j) => {
-      const w = ws[i + j];
-      return w === p || (j === last && (w === `${p}s` || w === `${p}es`));
-    });
-    if (hit) return true;
-  }
-  return false;
-}
-
 /**
- * An exclusion that is a known cuisine matches cuisine tags only, so "chinese" does not drop a dish
- * described with Chinese broccoli. Any other exclusion matches a cuisine tag exactly or a whole word
- * or phrase in the text, so "fish" does not drop shellfish.
+ * A cuisine exclusion (one in `cuisines`) matches a cuisine tag exactly, so "chinese" does not drop
+ * a dish described with Chinese broccoli. Any other exclusion is a substring match over the tags and
+ * text, so "fish" also drops shellfish, catfish and swordfish: over-excluding costs one dish, while
+ * missing a ruled-out ingredient can serve an allergen.
  */
 export function isExcluded(prefs: DinnerPreferences, target: ExclusionTarget, cuisines: ReadonlySet<string>): boolean {
   if (prefs.exclusions.length === 0) return false;
-  const tags = new Set(target.cuisines.filter((c): c is string => !!c).map((c) => c.toLowerCase()));
-  let texts: string[][] | undefined;
-  return prefs.exclusions.some((raw) => {
-    const ex = raw.toLowerCase();
-    if (tags.has(ex)) return true;
-    if (cuisines.has(ex)) return false;
-    const phrase = words(ex);
-    if (phrase.length === 0) return false;
-    texts ??= target.text.filter((t): t is string => !!t).map(words);
-    return texts.some((ws) => hasPhrase(ws, phrase));
-  });
+  const lower = (ws: readonly (string | undefined)[]) => ws.filter((w): w is string => !!w).map((w) => w.toLowerCase());
+  const tags = lower(target.cuisines);
+  const words = [...tags, ...lower(target.text)];
+  return prefs.exclusions.some((ex) => (cuisines.has(ex) ? tags.includes(ex) : words.some((w) => w.includes(ex))));
 }
 
 export interface RankedArchetype {

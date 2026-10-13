@@ -151,17 +151,21 @@ describe('hardFilterReason', () => {
     expect(hardFilterReason({ ...melt, tags: { ...melt.tags, cuisine: 'american' } }, seoul, noAmerican, ctx)).toBe('excluded');
   });
 
-  it('matches ingredient exclusions as whole words in the name and description', () => {
+  it('matches ingredient exclusions as substrings of words in the name and description', () => {
     const noFish = applyEffects(emptyPreferences(), [{ path: 'exclusions', value: 'fish' }]);
-    const platter: MenuItem = {
+    const dish = (name: string, description: string): MenuItem => ({
       ...pho,
-      id: 'platter',
-      name: 'Shellfish Platter',
-      description: 'Shrimp, clams and mussels',
+      id: name,
+      name,
+      description,
       tags: { ...pho.tags, archetypeId: undefined },
-    };
-    expect(hardFilterReason(platter, phoHouse, noFish, ctx)).toBeNull();
-    expect(hardFilterReason({ ...platter, description: 'Shrimp, clams and a whole fish' }, phoHouse, noFish, ctx)).toBe('excluded');
+    });
+    expect(hardFilterReason(dish('Shellfish Platter', 'Shrimp, clams and mussels'), phoHouse, noFish, ctx)).toBe('excluded');
+    expect(hardFilterReason(dish('Catfish Po Boy', 'Cornmeal-crusted on a roll'), phoHouse, noFish, ctx)).toBe('excluded');
+    expect(hardFilterReason(dish('Grilled Swordfish', 'With salsa verde'), phoHouse, noFish, ctx)).toBe('excluded');
+    expect(hardFilterReason(dish('Pho Tai', 'Rare beef noodle soup'), phoHouse, noFish, ctx)).toBeNull();
+    const noNuts = applyEffects(emptyPreferences(), [{ path: 'exclusions', value: 'nut' }]);
+    expect(hardFilterReason(dish('Beet Salad', 'Goat cheese and candied walnuts'), phoHouse, noNuts, ctx)).toBe('excluded');
   });
 
   it('filters over-budget items unless the budget is flexible', () => {

@@ -39,7 +39,14 @@ export function hardFilterReason(
   if (ctx.rejectedItemIds?.has(item.id)) return 'rejected';
   const target = {
     cuisines: [item.tags.cuisine, restaurant.cuisine],
-    text: [item.name, item.description, item.tags.archetypeId, ...item.tags.proteins, ...item.tags.formats, ...item.tags.carbs],
+    text: [
+      ...item.name.toLowerCase().split(/[^a-z]+/),
+      ...(item.description ?? '').toLowerCase().split(/[^a-z]+/),
+      item.tags.archetypeId,
+      ...item.tags.proteins,
+      ...item.tags.formats,
+      ...item.tags.carbs,
+    ],
   };
   if (isExcluded(prefs, target, knownCuisines(ctx.kb))) return 'excluded';
   if (
