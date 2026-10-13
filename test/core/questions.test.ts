@@ -105,6 +105,8 @@ describe('round two', () => {
     expect(roundTwoFrom(fresh)).not.toContain('heaviness');
     const comforting = applyEffects(fresh, [{ path: 'desiredQualities.comforting', value: 0.5 }]);
     expect(roundTwoFrom(comforting)).toContain('heaviness');
+    const notComforting = applyEffects(fresh, [{ path: 'desiredQualities.comforting', value: -0.8 }]);
+    expect(roundTwoFrom(notComforting)).toContain('heaviness');
     const comfortingAndRich = applyEffects(comforting, [{ path: 'desiredQualities.rich', value: 1 }]);
     expect(roundTwoFrom(comfortingAndRich)).not.toContain('heaviness');
   });
