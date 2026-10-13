@@ -13,6 +13,7 @@
     "fixtures",
     "test/core",
     "test/worker",
+    "scripts",
     "vitest.*.ts",
     "vite.config.ts"
   ]
