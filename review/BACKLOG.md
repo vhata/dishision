@@ -79,7 +79,6 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `stale-geo-error-masks-server-error`, `raw-error-codes-in-copy`, `suggestion-failure-still-thanks`, `hidden-other-text-still-submitted`, `hash-restore-fragile`, `recommend-error-has-no-retry`
   - Starting point: `src/client/api.ts`, `App.tsx`, `screens/Landing.tsx`, `screens/Recommendation.tsx`, `components/QuestionCard.tsx`
-  - Related: `skip-warns-about-typed-other-text`
 - [CORE] `core-tests-that-bite` — **Every risky core branch has a test that fails when it breaks.** Eleven of 28 scratch mutations survived the core suite, and the gut-check test builds an unreachable state.
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `core-test-mutation-survivors`, `archetype-test-impossible-state`
