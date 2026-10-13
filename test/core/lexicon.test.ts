@@ -62,4 +62,44 @@ describe('vegetarian tagging', () => {
     );
     expect(tagItem(kb, { name: 'Chana Masala', description: 'Chickpeas in tomato gravy' }).tags.proteins).toContain('vegetarian');
   });
+
+  it.each([
+    ['Veggie Burger', 'Black bean patty, lettuce, tomato, brioche bun'],
+    ['Vegan Fish Tacos', 'Beer-battered hearts of palm, slaw, lime crema'],
+    ['Plant-Based Smash Burger', 'Two patties, American cheese, pickles'],
+    ['Plant Based Chicken Sandwich', 'Crispy seitan cutlet, pickles, mayo'],
+    ['Vegan "Chicken" Wings', 'Cauliflower, buffalo sauce'],
+    ['Vegetarian Bun Bo Hue', 'Lemongrass broth, rice noodles, tofu'],
+    ['Vegan Fried Chicken', 'Crispy soy cutlet'],
+    ['Veggie Double Cheeseburger', undefined],
+  ])('an explicit marker keeps %s vegetarian and drops the meat its name implied', (name, description) => {
+    const r = tagItem(kb, { name, description });
+    expect(r.tags.proteins).toEqual(['vegetarian']);
+  });
+
+  it('keeps the archetype and scores of a marker-modified dish', () => {
+    const r = tagItem(kb, { name: 'Veggie Burger' });
+    expect(r.tags.archetypeId).toBe('burger');
+    expect(r.scores.handheld).toBe(1);
+    expect(r.tags.carbs).toContain('bread');
+  });
+
+  it.each([
+    ['Beef and Veggie Stir Fry', undefined, 'beef'],
+    ['Steak & Veggie Kabobs', undefined, 'beef'],
+    ['Veggie and Chicken Skewers', undefined, 'chicken'],
+    ['Veggie Burger with Chicken', undefined, 'chicken'],
+    ['Veggie Burger', 'Add a beef patty for $3', 'beef'],
+    ['Fish Tacos', 'Vegan, made with hearts of palm', 'seafood'],
+  ])('a meat word the marker does not modify still wins in %s', (name, description, meat) => {
+    const r = tagItem(kb, { name, description });
+    expect(r.tags.proteins).toContain(meat);
+    expect(r.tags.proteins).not.toContain('vegetarian');
+  });
+
+  it('does not treat ingredient vegetables as a marker', () => {
+    const r = tagItem(kb, { name: 'Vegetable Beef Soup' });
+    expect(r.tags.proteins).toContain('beef');
+    expect(r.tags.proteins).not.toContain('vegetarian');
+  });
 });
