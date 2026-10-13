@@ -4,6 +4,13 @@ Non-obvious choices and their trade-offs, dated, newest section first. Read the 
 
 Design-level decisions (free-tier constraints, minimal LLM use, no one-way doors, Google Places terms, D1-only storage) are in the design spec and are not restated here. Task-level rulings made while implementing phase 1 are in [`superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md`](superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md).
 
+## 2026-10-13
+
+| Decision | Reason and trade-off |
+| --- | --- |
+| The runner-up sentence calls a quality a shortfall only when the runner-up's own score for it is at least 0.1 below the pick's, and only when both carry the score; otherwise it says "a close second" (score gap up to 0.05) or "the next best fit". | Scores are coarse estimates, hand-set on fixtures or tagged by the lexicon, so a smaller gap is noise that would read as a claim. A missing score is unknown, not low, the same rule the avoided-quality phrases follow. The cost is that some runner-ups get the generic phrase when a reason exists below the threshold. |
+| The "Skipped" sentence names a candidate only when its largest phrased penalty, removed on its own, would have put it above the pick. | That is the one case where "skipped because of X" is true of the ranking rather than a guess. A candidate that lost for several reasons together, or on positives, is not named, so the sentence is absent more often than the design's example suggests. |
+
 ## 2026-10-12
 
 | Decision | Reason and trade-off |
