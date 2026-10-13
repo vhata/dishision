@@ -55,10 +55,6 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 
 ### P2 Normal
 
-- [CORE] `cuisine-exclusion-tag-only` — **Cuisine exclusions match cuisine tags only, not description words or substrings.** Excluding "chinese" currently drops Pad See Ew because its description says "Chinese broccoli", and `isExcluded` substring matching makes "fish" exclude "shellfish". Excluding "american" likewise drops any dish whose description mentions American cheese.
-  - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
-  - Starting point: `src/core/scoring.ts` hardFilterReason and `src/core/planner.ts` isExcluded; keep description scanning for ingredient exclusions
-  - Related: `other-text-exclusions-match-items`
 - [CORE] `other-text-keyword-false-positives` — **The "Other" keyword parser stops reading "hot pot" as spicy, "hand-pulled noodles" as handheld, and "had a burger" as recentMeals ["a"].** Articles must be stripped and multi-word dishes matched before single words. The future-meal pattern's `\w+day` also matches "today", so "eating light today" records futureMeals ["light"] and loses the wish for something light.
   - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: `src/core/otherText.ts` keywordParse and `test/core/otherText.test.ts`
