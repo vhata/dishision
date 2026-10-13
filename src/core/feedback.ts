@@ -27,14 +27,15 @@ export const FEEDBACK_LABELS: Record<FeedbackReason, string> = {
   another: 'Just show me another',
 };
 
+/** What the diner was shown: one entry per dish for a pair, so feedback covers every dish. */
 export interface ShownSummary {
-  cuisine?: string;
-  archetypeId?: string;
+  cuisines: string[];
+  archetypeIds: string[];
   totalPriceCents?: number;
 }
 
-function pushUnique(list: string[], v: string | undefined) {
-  if (v && !list.includes(v)) list.push(v);
+function pushUnique(list: string[], values: string[]) {
+  for (const v of values) if (v && !list.includes(v)) list.push(v);
 }
 
 export function applyFeedback(prefs: DinnerPreferences, reason: FeedbackReason, shown: ShownSummary): DinnerPreferences {
@@ -66,11 +67,11 @@ export function applyFeedback(prefs: DinnerPreferences, reason: FeedbackReason, 
       p.carbs.starchAsMain = -1;
       break;
     case 'had_recently':
-      pushUnique(p.recentMeals, shown.archetypeId);
-      pushUnique(p.recentMeals, shown.cuisine);
+      pushUnique(p.recentMeals, shown.archetypeIds);
+      pushUnique(p.recentMeals, shown.cuisines);
       break;
     case 'not_that_cuisine':
-      if (shown.cuisine) p.cuisines[shown.cuisine] = -1;
+      for (const cuisine of shown.cuisines) p.cuisines[cuisine] = -1;
       break;
     case 'another':
       break;
