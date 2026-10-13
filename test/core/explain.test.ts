@@ -224,3 +224,41 @@ describe('runner-up protein comparison', () => {
     expect(explain(primary, beefFirst, beef)).toMatch(/Runner-up: Bun Bo Hue at Pho House, a close second\./);
   });
 });
+
+describe('skipped candidate', () => {
+  const light = applyEffects(emptyPreferences(), [{ path: 'heaviness', value: -0.5 }]);
+  const primary = single(dish('p', 'Tom Yum', { brothy: 0.95, rich: 0.2 }), 'Siam Kitchen', 0.7, { brothy: 0.95 });
+  const second = single(dish('r', 'Pho Tai', { brothy: 0.95, rich: 0.3 }), 'Pho House', 0.65, { brothy: 0.95 });
+  const curry = single(
+    dish('c', 'Massaman Curry', { rich: 0.9, comforting: 0.9 }),
+    'Siam Kitchen',
+    0.6,
+    { comforting: 0.9 },
+    { tooRich: 0.25 },
+  );
+
+  it('names the dish a penalty kept from winning, and why', () => {
+    const text = explain(primary, light, second, [primary, second, curry]);
+    expect(text).toMatch(/Skipped Massaman Curry at Siam Kitchen: heavier than you wanted\./);
+    expect(text.indexOf('Skipped')).toBeLessThan(text.indexOf('Runner-up'));
+  });
+
+  it('says nothing when no penalty changed the outcome', () => {
+    const weak = { ...curry, score: 0.4, trace: { ...curry.trace, total: 0.4 } };
+    expect(explain(primary, light, second, [primary, second, weak])).not.toMatch(/Skipped/);
+  });
+
+  it('never names the pick, the runner-up, a dish they share, or a placeholder', () => {
+    const penalisedSecond = { ...second, trace: { ...second.trace, penalties: { tooRich: 0.25 } } };
+    const sharing: Recommendation = { ...curry, kind: 'pair', items: [curry.items[0]!, primary.items[0]!] };
+    const placeholder: Recommendation = { ...curry, menuless: true };
+    const text = explain(primary, light, penalisedSecond, [primary, penalisedSecond, sharing, placeholder]);
+    expect(text).not.toMatch(/Skipped/);
+  });
+
+  it('picks the candidate that would have won by the most', () => {
+    const spicy = single(dish('s', 'Jungle Curry', { spicy: 0.95 }), 'Siam Kitchen', 0.55, {}, { tooSpicy: 0.2 });
+    const fiery = single(dish('f', 'Vindaloo', { spicy: 0.95 }), 'Bombay', 0.45, {}, { tooSpicy: 0.2 });
+    expect(explain(primary, light, second, [primary, second, fiery, curry, spicy])).toMatch(/Skipped Massaman Curry/);
+  });
+});

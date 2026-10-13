@@ -133,7 +133,38 @@ function runnerUpSentence(runnerUp: Recommendation, primary: Recommendation): st
   return `Runner-up: ${dishesAt(runnerUp)}, ${reason}.`;
 }
 
-export function explain(rec: Recommendation, prefs: DinnerPreferences, runnerUp?: Recommendation | null): string {
+/**
+ * Names the candidate one penalty kept from winning: removing that penalty alone would put it above the pick.
+ * The pick, the runner-up, anything sharing a dish with them, and menu-less placeholders are never named.
+ */
+function skippedSentence(
+  primary: Recommendation,
+  runnerUp: Recommendation | null | undefined,
+  ranked: readonly Recommendation[],
+): string | null {
+  const shown = new Set([...primary.items, ...(runnerUp?.items ?? [])].map((i) => i.id));
+  let best: { rec: Recommendation; phrase: string; without: number } | null = null;
+  for (const rec of ranked) {
+    if (rec === primary || rec === runnerUp || rec.menuless || rec.items.some((i) => shown.has(i.id))) continue;
+    const top = topPenalty(rec);
+    if (!top || top.key === 'menuless') continue;
+    const without = rec.score + top.value;
+    if (without <= primary.score) continue;
+    if (!best || without > best.without) best = { rec, phrase: top.phrase, without };
+  }
+  return best ? `Skipped ${dishesAt(best.rec)}: ${best.phrase}.` : null;
+}
+
+/**
+ * Template explanation over the scoring trace. Pass the full ranking as `ranked` to name a candidate a penalty
+ * kept from winning ("Skipped ...").
+ */
+export function explain(
+  rec: Recommendation,
+  prefs: DinnerPreferences,
+  runnerUp?: Recommendation | null,
+  ranked: readonly Recommendation[] = [],
+): string {
   const first = lead(rec);
   if (rec.menuless) {
     const dish = rec.items[0]?.name.toLowerCase() ?? 'this';
@@ -149,6 +180,8 @@ export function explain(rec: Recommendation, prefs: DinnerPreferences, runnerUp?
   let text = `${first} ${got}${avoided.length ? `, ${joinNatural(avoided)}` : ''}.`;
   const described = rec.items.find((i) => i.description && i.description.length <= 120);
   if (described) text += ` The menu lists ${described.name} as "${described.description}".`;
+  const skipped = skippedSentence(rec, runnerUp, ranked);
+  if (skipped) text += ` ${skipped}`;
   if (runnerUp) text += ` ${runnerUpSentence(runnerUp, rec)}`;
   return text;
 }
