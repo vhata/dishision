@@ -81,10 +81,6 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 
 ### P3 Low
 
-- [KB] `heaviness-node-applies-condition` — **The heaviness node applies only when comforting is set and rich is unset, as the spec says.** It currently applies whenever rich is unset.
-  - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
-  - Starting point: `kb/questions.json` heaviness node `applies`; design spec round-two list (line 207)
-  - Triage 2026-10-12: the owner chose the spec's rule over the current one.
 - [CORE] `explain-protein-comparative-phrase` — **The runner-up explanation gives protein its own comparative phrase.** "a little less the protein you asked for" reads awkwardly.
   - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: `src/core/explain.ts` runner-up sentence
