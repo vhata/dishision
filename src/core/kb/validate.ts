@@ -155,7 +155,7 @@ export function lexiconIssues(entry: LexiconEntry, ctx: ValidationContext, where
   try {
     new RegExp(entry.pattern, 'i');
   } catch (e) {
-    issues.push(`${where}.pattern: invalid regular expression (${(e as Error).message})`);
+    issues.push(`${where}.pattern: invalid regular expression: ${(e as Error).message.replace(/^Invalid regular expression: /, '')}`);
   }
   if (entry.archetypeId !== undefined && !ctx.archetypeIds.has(entry.archetypeId)) {
     issues.push(`${where}.archetypeId: unknown archetype ${entry.archetypeId}`);
