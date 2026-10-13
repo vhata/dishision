@@ -93,9 +93,6 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
   - Source: independent review of commit 825592c on phase-1-conversation-and-ranking, 2026-10-09
   - Starting point: `test/core/scenarios.test.ts`; `test/core/pairs.test.ts` "never stands a small side up" is the test that does bite; `fixtures/sf.ts` fries and goi cuon
   - Related: `core-tests-that-bite`
-- [CLIENT] `skip-warns-about-typed-other-text` — **Skipping a question with text typed in "Other" asks before discarding it.** Skip currently drops the text silently.
-  - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
-  - Starting point: `src/client/components/QuestionCard.tsx`
 
 ### Unprioritized
 
