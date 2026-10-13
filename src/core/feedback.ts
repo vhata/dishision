@@ -35,7 +35,7 @@ export interface ShownSummary {
 }
 
 function pushUnique(list: string[], values: string[]) {
-  for (const v of values) if (v && !list.includes(v)) list.push(v);
+  for (const v of values) if (!list.includes(v)) list.push(v);
 }
 
 export function applyFeedback(prefs: DinnerPreferences, reason: FeedbackReason, shown: ShownSummary): DinnerPreferences {
