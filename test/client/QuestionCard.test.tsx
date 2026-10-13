@@ -21,8 +21,10 @@ const skipAnswer = { kind: 'single', nodeId: 'hunger' };
 
 function renderCard() {
   const onSubmit = vi.fn(async () => {});
-  render(<QuestionCard question={question} busy={false} onSubmit={onSubmit} onSuggest={async () => {}} />);
-  return { onSubmit };
+  const onSuggest = async () => {};
+  const { rerender } = render(<QuestionCard question={question} busy={false} onSubmit={onSubmit} onSuggest={onSuggest} />);
+  const setBusy = (busy: boolean) => rerender(<QuestionCard question={question} busy={busy} onSubmit={onSubmit} onSuggest={onSuggest} />);
+  return { onSubmit, setBusy };
 }
 
 function typeOther(text: string) {
@@ -85,5 +87,28 @@ describe('QuestionCard skip', () => {
     expect(onSubmit).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
     expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('salmon sounds great');
+  });
+
+  it('disables both prompt buttons while an answer is in flight', () => {
+    const { setBusy } = renderCard();
+    typeOther('had pho on Sunday');
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    setBusy(true);
+    expect((screen.getByRole('button', { name: 'Discard and skip' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Keep editing' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('drops the prompt when the Other text is cleared, and does not bring it back on typing', () => {
+    const { onSubmit } = renderCard();
+    typeOther('had pho on Sunday');
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '  ' } });
+
+    expect(screen.queryByRole('group', { name: /discard what you typed in other/i })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Skip' })).toBeTruthy();
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'salmon' } });
+    expect(screen.queryByRole('group', { name: /discard what you typed in other/i })).toBeNull();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });
