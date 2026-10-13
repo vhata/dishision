@@ -6,10 +6,6 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
 
 ## P1 High
 
-- [WORKER] `coarsen-session-coordinates` — **Sessions created from device location store a coarse point, never the raw GPS fix.** Raw coordinates are stored at full precision, which breaks the coarse-location invariant and the spec's privacy section.
-  - Source: review/2026-10-09-0901-full.md, 2026-10-09
-  - Findings: `session-coords-stored-at-full-precision`
-  - Starting point: `src/worker/routes/session.ts` create route; `src/client/screens/Landing.tsx` useLocation; add a worker test on stored precision
 - [CORE] `other-text-exclusions-match-items` — **Exclusions typed in "Other" exclude the dishes they name, and negation covers only the words it governs.** "No shrimp" and "no seafood" record sub-type words no item carries, and "chicken without rice" excludes chicken.
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `other-text-seafood-exclusions-miss`, `other-text-negation-scope`
