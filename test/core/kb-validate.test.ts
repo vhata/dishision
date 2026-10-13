@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DERIVED_KEYS, kbIssues, PREFERENCE_FIELDS, parseKb } from '../../src/core/kb';
+import { DERIVED_FIELDS, kbIssues, PREFERENCE_FIELDS, parseKb } from '../../src/core/kb';
 import { KB_SCHEMA_VERSION } from '../../src/core/kb/schema';
 import { applyEffects, emptyPreferences } from '../../src/core/preferences';
 import { deriveContext } from '../../src/core/questions';
@@ -119,12 +119,35 @@ describe('parseKb semantic validation', () => {
     [{ path: 'exclusions', op: 'includes', value: 1 }, /includes needs a string/],
     [{ path: 'novelty', op: 'includes', value: 'x' }, /includes needs a list field/],
     [{ path: 'novelty', op: 'eq' }, /eq needs a value/],
+    [{ path: 'novelty', op: 'eq', value: 'high' }, /eq on novelty needs a number/],
+    [{ path: 'exclusions', op: 'eq', value: 'fried' }, /eq cannot compare exclusions/],
+    [{ path: 'budget', op: 'eq', value: 15 }, /eq cannot compare budget/],
+    [{ path: 'constructor', op: 'set' }, /unknown preference field constructor/],
+    [{ path: 'derived.plausibleArchetypeCount', op: 'gte', value: '5' }, /gte needs a number/],
+    [{ path: 'derived.plausibleArchetypeCount', op: 'eq', value: 'five' }, /eq on derived\.plausibleArchetypeCount needs a number/],
+    [
+      { path: 'derived.plausibleArchetypes', op: 'includes', value: 3 },
+      /includes needs a list field, derived\.plausibleArchetypes is not one/,
+    ],
+    [{ path: 'derived.plausibleArchetypes', op: 'eq', value: 3 }, /eq cannot compare derived\.plausibleArchetypes/],
+    [{ path: 'derived.plausibleArchetypes', op: 'gte', value: 3 }, /gte needs a numeric field/],
+    [{ path: 'derived.toString', op: 'set' }, /unknown derived value toString/],
   ])('rejects rule %j', (rule, pattern) => {
     const [msg] = issuesAfter((kb) => {
       kb.questions[2].applies = [{ all: [{ not: rule }] }];
     });
     expect(msg).toMatch(/questions\[brothy\]\.applies\[0\]\.all\[0\]\.not/);
     expect(msg).toMatch(pattern);
+  });
+
+  it('accepts set and unset on every derived value and numeric tests on the count', () => {
+    const rules = [
+      { path: 'derived.plausibleArchetypes', op: 'set' },
+      { path: 'derived.plausibleArchetypes', op: 'unset' },
+      { path: 'derived.plausibleArchetypeCount', op: 'lte', value: 3 },
+      { path: 'derived.plausibleArchetypeCount', op: 'eq', value: 3 },
+    ];
+    expect(issuesAfter((kb) => (kb.questions[2].applies = rules))).toEqual([]);
   });
 
   it.each([
@@ -196,7 +219,10 @@ describe('validator model stays in step with the preference model', () => {
             ? { path: field, value: spec.values[0]! }
             : spec.kind === 'number'
               ? { path: field, value: 0.5 }
-              : { path: `${field}.${spec.keys?.[0] ?? (field === 'archetypes' ? 'pho' : 'anything')}`, value: 0.5 };
+              : spec.kind === 'record'
+                ? { path: `${field}.${spec.keys?.[0] ?? (field === 'archetypes' ? 'pho' : 'anything')}`, value: 0.5 }
+                : undefined;
+      if (!effect) throw new Error(`no sample effect for ${field}`);
       kb.questions[0]!.options[0]!.effects = [effect];
       expect(kbIssues(kb), field).toEqual([]);
       expect(() => applyEffects(emptyPreferences(), [effect]), field).not.toThrow();
@@ -205,6 +231,6 @@ describe('validator model stays in step with the preference model', () => {
 
   it('knows every derived value the conversation computes', () => {
     const kb = parseKb(raw());
-    expect(Object.keys(deriveContext(kb, emptyPreferences())).sort()).toEqual([...DERIVED_KEYS].sort());
+    expect(Object.keys(deriveContext(kb, emptyPreferences())).sort()).toEqual(Object.keys(DERIVED_FIELDS).sort());
   });
 });
