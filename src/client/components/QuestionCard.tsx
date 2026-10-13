@@ -125,7 +125,11 @@ export function QuestionCard({ question, busy, onSubmit, onSuggest }: Props) {
           maxLength={500}
           placeholder="Say it your way. Example: had pho on Sunday, salmon sounds great."
           value={otherText}
-          onChange={(e) => setOtherText(e.target.value)}
+          onChange={(e) => {
+            setOtherText(e.target.value);
+            // Nothing left to discard, so the skip prompt no longer applies.
+            if (!e.target.value.trim()) setConfirmingSkip(false);
+          }}
         />
       ) : null}
 
