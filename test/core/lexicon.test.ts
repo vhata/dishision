@@ -106,6 +106,7 @@ describe('vegetarian tagging', () => {
     // The marker must immediately precede the meat: punctuation or any word between keeps the meat.
     ['Veggie, Chicken Skewers', undefined],
     ['Vegan: Chicken Wings', undefined],
+    ['Vegan/Chicken Wrap', undefined],
     ['Vegan "Chicken" Wings', 'Cauliflower, buffalo sauce'],
     ['Veggie w Chicken', undefined],
     ['Beef and Veggie Stir Fry', undefined],
