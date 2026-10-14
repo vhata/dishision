@@ -168,6 +168,30 @@ describe('hardFilterReason', () => {
     expect(hardFilterReason(dish('Beet Salad', 'Goat cheese and candied walnuts'), phoHouse, noNuts, ctx)).toBe('excluded');
   });
 
+  it('matches non-cuisine exclusions against the protein, format, carb and archetype tags', () => {
+    const bunCha: MenuItem = {
+      ...pho,
+      id: 'bun_cha',
+      name: 'Bun Cha',
+      description: 'Grilled patties, herbs and dipping sauce',
+      tags: { proteins: ['pork'], carbs: ['noodles'], cuisine: 'vietnamese', formats: ['bowl'], archetypeId: 'grilled_patties' },
+    };
+    const without = (value: string) =>
+      hardFilterReason(bunCha, phoHouse, applyEffects(emptyPreferences(), [{ path: 'exclusions', value }]), ctx);
+    expect(without('pork')).toBe('excluded');
+    expect(without('noodles')).toBe('excluded');
+    expect(without('bowl')).toBe('excluded');
+    expect(
+      hardFilterReason(
+        { ...bunCha, tags: { ...bunCha.tags, archetypeId: 'bun_cha_hanoi' } },
+        phoHouse,
+        applyEffects(emptyPreferences(), [{ path: 'exclusions', value: 'hanoi' }]),
+        ctx,
+      ),
+    ).toBe('excluded');
+    expect(without('beef')).toBeNull();
+  });
+
   it('filters over-budget items unless the budget is flexible', () => {
     const tight = applyEffects(emptyPreferences(), [{ path: 'budget.max', value: 12 }]);
     const flexible = applyEffects(tight, [{ path: 'budget.flexible', value: 1 }]);
