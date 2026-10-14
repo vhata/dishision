@@ -111,6 +111,9 @@ describe('vegetarian tagging', () => {
     ['Veggie Burger', 'Add a beef patty for $3'],
     // A dish word between the marker and the meat means the marker modifies that dish, not the meat.
     ['Veggie Ramen Chashu', undefined],
+    // Only known modifiers ("fried", "crispy", "double") may sit between the marker and the meat.
+    ['Veggie Supreme Chicken Pizza', undefined],
+    ['Veggie Lovers Meat Pizza', undefined],
     // Markers in the description never override the name.
     ['Fish Tacos', 'Vegan, made with hearts of palm'],
     ['Burrito', 'Vegetarian? Ask for no chorizo'],
@@ -130,6 +133,9 @@ describe('vegetarian tagging', () => {
     ['Veggie Pizza', 'Peppers, onions, pepperoni'],
     ['Vegan Caesar', 'Romaine, anchovy dressing'],
     ['Vegetable Duck Curry', undefined],
+    ['Veggie Burger with Bratwurst', undefined],
+    ['Veggie Burger', 'Topped with foie gras'],
+    ['Vegan Hot Dog', 'Served with a beef frank'],
   ])('keeps the meat in %s (%s)', (name, description) => {
     const proteins = tagItem(kb, { name, description }).tags.proteins;
     expect(proteins).not.toContain('vegetarian');
