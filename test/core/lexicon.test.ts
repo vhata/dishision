@@ -203,6 +203,9 @@ describe('vegetarian tagging', () => {
     ['Bacon Burger', undefined, 'pork'],
     ['Caesar Salad', 'Anchovy dressing', 'seafood'],
     ['Unagi Don', undefined, 'seafood'],
+    ['Teriyaki Jerky', undefined, 'beef'],
+    ['Smoked Lox Bagel', undefined, 'seafood'],
+    ['Maple Bacon Donut', undefined, 'pork'],
   ])('tags %s with its own protein', (name, description, protein) => {
     expect(tagItem(kb, { name, description }).tags.proteins).toContain(protein);
   });
