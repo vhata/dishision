@@ -29,6 +29,11 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 - [KB] `heaviness-asked-when-already-set` — **Decide whether the heaviness question is skipped when heaviness is already known.** With feel "comforting" and "nothing heavy" typed in the avoid question, heaviness is already -0.7 and round two still asks "How heavy should it be?", whose answer overwrites it; the spec's rule (comforting set, rich unset) does not mention heaviness.
   - Source: independent review of PR #13 (heaviness-node-applies-condition), 2026-10-13
   - Starting point: `kb/questions.json` heaviness node `applies`; design spec round-two list
+- [TOOLING] `drop-worker-fs-module-cache-override` — **The worker test project uses Vitest's fs module cache again once @cloudflare/vitest-plugin ships workers-sdk#16163.** Vitest 5 hands workerd paths to cached modules it cannot read, so the worker project turns `fsModuleCache` off and re-transforms its files on every run.
+  - Source: PR #19 (todo/bump-vitest-to-five), 2026-10-13
+  - Blocked by: a @cloudflare/vitest-plugin release containing cloudflare/workers-sdk#16163
+  - Starting point: `vitest.worker.config.ts` fsModuleCache and its `docs/DECISIONS.md` row; delete `node_modules/.vitest-cache` and run the worker project cold and warm to confirm
+  - If coverage is ever added, cloudflare/workers-sdk#16238 (V8 coverage teardown under Vitest 5, open on 2026-10-13) is a separate plugin bug to check first.
 
 ## Needs proof of concept
 
@@ -106,9 +111,6 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 - [CLIENT] `skip-warns-about-typed-other-text` — **Skipping a question with text typed in "Other" asks before discarding it.** Skip currently drops the text silently.
   - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: `src/client/components/QuestionCard.tsx`
-- [TOOLING] `bump-vitest-to-five` — **Move to Vitest 5 as the plan specified.** Pinned to ^4.1 because the Cloudflare vitest plugin 1.3.7 supports only Vitest 4 and the worker pool failed to start under 5.
-  - Source: phase-1 Task 1 ruling, docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
-  - `@cloudflare/vitest-plugin` 1.4.0 declares `vitest: ^4.1.0 || ^5.0.0` (checked at triage, 2026-10-12), so the blocker has cleared.
 
 ### Unprioritized
 
