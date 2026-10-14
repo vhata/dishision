@@ -116,6 +116,9 @@ describe('vegetarian tagging', () => {
     ['Burrito', 'Vegetarian? Ask for no chorizo'],
     ['Pizza', 'Vegan cheese available on request — Italian sausage, peppers'],
     ['Pho', 'Vegetarian broth beef brisket'],
+    ['Tacos', 'Vegan chicken, salsa verde'],
+    // A name marker reaches only meat in the name.
+    ['Vegan Bowl', 'Chicken, rice and greens'],
     // Meat words beyond the protein patterns that name a dish.
     ['Veggie Burger with Bacon', undefined],
     ['Veggie Burger, Bacon', undefined],

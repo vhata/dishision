@@ -94,9 +94,10 @@ function markerOverridesMeat(nameLength: number, text: string, markers: Span[], 
     if (s.start >= phrase.end) return false;
     phrase.end = Math.max(phrase.end, s.end);
   }
+  // The phrase must sit in the name. A marker after it, or in the description, leaves no gap of plain
+  // words before it, so only a name marker can pass the gap test.
   if (phrase.end > nameLength) return false;
   return markers.some((m) => {
-    if (m.end > phrase.start) return false;
     const gap = text.slice(m.end, phrase.start);
     if (!PLAIN_GAP.test(gap) || gap.split(' ').some((w) => BREAK_WORDS.has(w))) return false;
     return !dishWords.some((d) => d.start < phrase.start && d.end > m.end);
@@ -113,8 +114,8 @@ export function tagItem(kb: KnowledgeBase, item: { name: string; description?: s
   let cuisine: string | undefined;
   let archetypeId: string | undefined;
   const hits: string[] = [];
-  /** Claiming diet markers in the name; only these can override meat. */
-  const nameMarkers: Span[] = [];
+  /** Claiming diet markers, in the name or the description. */
+  const markers: Span[] = [];
   /** Every occurrence of a word that tags a meat protein, in the name or the description. */
   const meat: Span[] = [];
   /** Occurrences of non-meat words that name a dish, cuisine or carb ("ramen", "pizza"). */
@@ -132,7 +133,7 @@ export function tagItem(kb: KnowledgeBase, item: { name: string; description?: s
     if (isMarkerEntry(entry)) {
       // A negated or hedged marker ("non-vegetarian", "vegan option") says nothing about the dish.
       const claims = found.filter((s) => isClaim(text, s));
-      nameMarkers.push(...claims.filter((s) => s.end <= name.length));
+      markers.push(...claims);
       if (claims.length > 0) for (const p of entry.proteins) proteins.add(p);
     } else {
       for (const p of entry.proteins) proteins.add(p);
@@ -147,7 +148,7 @@ export function tagItem(kb: KnowledgeBase, item: { name: string; description?: s
 
   // Meat wins over a vegetarian tag unless a name marker unambiguously makes it a style.
   if (proteins.has(VEGETARIAN) && [...proteins].some((p) => p !== VEGETARIAN)) {
-    if (markerOverridesMeat(name.length, text, nameMarkers, meat, dishWords)) {
+    if (markerOverridesMeat(name.length, text, markers, meat, dishWords)) {
       for (const p of [...proteins]) if (p !== VEGETARIAN) proteins.delete(p);
     } else {
       proteins.delete(VEGETARIAN);
