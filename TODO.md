@@ -122,3 +122,7 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 - [DOCS] `decisions-formatter-row-stale` — **`docs/DECISIONS.md` no longer says there is no formatter or linter gate.** The row "No formatter or linter gate yet" predates the Biome adoption in PR #9.
   - Source: independent review of PR #19 (bump-vitest-to-five), 2026-10-13
   - Starting point: `docs/DECISIONS.md` gates table; `docs/QUALITY.md` already describes the Biome gates
+- [CORE] `lexicon-meat-cut-words` — **Wings, tenders, nuggets, ribs, drumsticks, gyro and kebab tag meat, with plant guards such as cauliflower wings.** A marked combo like "Veggie Burger and Wings" reads vegetarian-only because these cuts are not meat words, and "Buffalo Wings" tags nothing.
+  - Source: independent review of PR #14 (vegetarian-marker-wins-over-implied-protein), 2026-10-13
+  - Starting point: `kb/lexicon.json` meat entries and their substitute lookbehinds; the cut words need guards for plant versions ("cauliflower wings", "seitan nuggets")
+  - Related: `lexicon-tagging-accuracy`
