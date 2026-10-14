@@ -34,13 +34,31 @@ function spansOf(pattern: string, text: string): Span[] {
   return [...text.matchAll(regex(pattern, 'gi'))].map((m) => ({ start: m.index, end: m.index + m[0].length }));
 }
 
+/** A diet marker found in the text. A weak one ("veggie") can also mean "with vegetables". */
+interface Marker extends Span {
+  weak: boolean;
+}
+
+/** A meat word found in the text; `implied` when it comes from a dish entry ("burger"), not a meat word. */
+interface MeatSpan extends Span {
+  implied: boolean;
+}
+
+/** Probe words that identify the marker entries; the marker vocabulary itself lives in the knowledge base. */
+const STRONG_MARKER_PROBE = VEGETARIAN;
+const WEAK_MARKER_PROBE = 'veggie';
+
 /**
- * Diet-marker entries are the vegetarian entries whose pattern recognises the word "vegetarian" itself;
- * their other words ("vegan", "veggie", "plant-based") live only in the knowledge base. Ingredient
- * entries ("tofu", "vegetables") tag vegetarian too but are not markers.
+ * Diet-marker entries are vegetarian entries identified by a probe word. The strong entry recognises
+ * "vegetarian" itself (with "vegan" and "plant-based"); the weak entry recognises "veggie" (with "veg"
+ * and "veggies"), which menus also use for "with vegetables". Ingredient entries ("tofu", "vegetables")
+ * tag vegetarian too but match neither probe, so they are not markers.
  */
-function isMarkerEntry(entry: LexiconEntry): boolean {
-  return entry.proteins.includes(VEGETARIAN) && regex(entry.pattern).test(VEGETARIAN);
+function markerStrength(entry: LexiconEntry): 'strong' | 'weak' | undefined {
+  if (!entry.proteins.includes(VEGETARIAN)) return undefined;
+  if (regex(entry.pattern).test(STRONG_MARKER_PROBE)) return 'strong';
+  if (regex(entry.pattern).test(WEAK_MARKER_PROBE)) return 'weak';
+  return undefined;
 }
 
 /**
@@ -59,9 +77,10 @@ function isClaim(text: string, marker: Span): boolean {
  * burger", "vegan fish tacos". Every meat word in the name and description must form one phrase in the
  * name, and a claiming marker must immediately precede it, separated by one plain space. Any word between
  * ("vegan cheese chicken pizza", even "vegan fried chicken") keeps the meat, since no list of harmless
- * words in between could be trusted.
+ * words in between could be trusted. A weak marker overrides only meat that dish entries imply ("veggie
+ * burger"), never a meat word ("veggie chicken pizza" is a chicken pizza with vegetables).
  */
-function markerOverridesMeat(nameLength: number, text: string, markers: Span[], meat: Span[]): boolean {
+function markerOverridesMeat(nameLength: number, text: string, markers: Marker[], meat: MeatSpan[]): boolean {
   const sorted = [...meat].sort((a, b) => a.start - b.start);
   const first = sorted[0];
   if (!first) return false;
@@ -72,7 +91,8 @@ function markerOverridesMeat(nameLength: number, text: string, markers: Span[], 
   }
   // The phrase must sit in the name, so only a marker in the name can sit right before it.
   if (phrase.end > nameLength) return false;
-  return markers.some((m) => m.end + 1 === phrase.start && text[m.end] === ' ');
+  const onlyImplied = sorted.every((s) => s.implied);
+  return markers.some((m) => m.end + 1 === phrase.start && text[m.end] === ' ' && (!m.weak || onlyImplied));
 }
 
 export function tagItem(kb: KnowledgeBase, item: { name: string; description?: string }): TagResult {
@@ -86,9 +106,9 @@ export function tagItem(kb: KnowledgeBase, item: { name: string; description?: s
   let archetypeId: string | undefined;
   const hits: string[] = [];
   /** Claiming diet markers, in the name or the description. */
-  const markers: Span[] = [];
+  const markers: Marker[] = [];
   /** Every occurrence of a word that tags a meat protein, in the name or the description. */
-  const meat: Span[] = [];
+  const meat: MeatSpan[] = [];
 
   for (const entry of kb.lexicon) {
     if (!regex(entry.pattern).test(text)) continue;
@@ -99,15 +119,16 @@ export function tagItem(kb: KnowledgeBase, item: { name: string; description?: s
       scores[key] = entry.archetypeId && current !== undefined ? value : Math.max(current ?? 0, value);
     }
     const found = spansOf(entry.pattern, text);
-    if (isMarkerEntry(entry)) {
+    const strength = markerStrength(entry);
+    if (strength) {
       // A negated or hedged marker ("non-vegetarian", "vegan option") says nothing about the dish.
       const claims = found.filter((s) => isClaim(text, s));
-      markers.push(...claims);
+      markers.push(...claims.map((s) => ({ ...s, weak: strength === 'weak' })));
       if (claims.length > 0) for (const p of entry.proteins) proteins.add(p);
     } else {
       for (const p of entry.proteins) proteins.add(p);
     }
-    if (entry.proteins.some((p) => p !== VEGETARIAN)) meat.push(...found);
+    if (entry.proteins.some((p) => p !== VEGETARIAN)) meat.push(...found.map((s) => ({ ...s, implied: !!entry.archetypeId })));
     for (const c of entry.carbs) carbs.add(c);
     for (const f of entry.formats) formats.add(f);
     cuisine ??= entry.cuisine;
