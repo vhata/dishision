@@ -86,6 +86,11 @@ describe('keywordParse', () => {
     expect(keywordParse('having burritos tomorrow').futureMeals).toEqual(['mexican']);
   });
 
+  it('does not read a longer word that starts with a dish as that dish', () => {
+    expect(keywordParse('had pokemon').recentMeals).toEqual(['pokemon']);
+    expect(keywordParse('had currywurst').recentMeals).toEqual(['currywurst']);
+  });
+
   it('reads only a known dish phrase as a two-word planned meal', () => {
     const p = keywordParse('eating something light later');
     expect(p.futureMeals).toBeUndefined();
