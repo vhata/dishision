@@ -63,18 +63,16 @@ describe('vegetarian tagging', () => {
     expect(tagItem(kb, { name: 'Chana Masala', description: 'Chickpeas in tomato gravy' }).tags.proteins).toContain('vegetarian');
   });
 
-  it.each([
+  it.each<[string, string | undefined]>([
     ['Veggie Burger', 'Black bean patty, lettuce, tomato, brioche bun'],
     ['Vegan Fish Tacos', 'Beer-battered hearts of palm, slaw, lime crema'],
     ['Plant-Based Smash Burger', 'Two patties, American cheese, pickles'],
-    ['Plant Based Chicken Sandwich', 'Crispy seitan cutlet, pickles, mayo'],
-    ['Vegan "Chicken" Wings', 'Cauliflower, buffalo sauce'],
-    ['Vegetarian Bun Bo Hue', 'Lemongrass broth, rice noodles, tofu'],
     ['Vegan Fried Chicken', 'Crispy soy cutlet'],
+    ['Plant Based Chicken Sandwich', 'Crispy seitan cutlet, pickles, mayo'],
+    ['Vegetarian Bun Bo Hue', 'Lemongrass broth, rice noodles, tofu'],
     ['Veggie Double Cheeseburger', undefined],
-  ])('an explicit marker keeps %s vegetarian and drops the meat its name implied', (name, description) => {
-    const r = tagItem(kb, { name, description });
-    expect(r.tags.proteins).toEqual(['vegetarian']);
+  ])('a marker in the name keeps %s vegetarian and drops the meat the name implied', (name, description) => {
+    expect(tagItem(kb, { name, description }).tags.proteins).toEqual(['vegetarian']);
   });
 
   it('keeps the archetype and scores of a marker-modified dish', () => {
@@ -84,22 +82,74 @@ describe('vegetarian tagging', () => {
     expect(r.tags.carbs).toContain('bread');
   });
 
-  it.each([
-    ['Beef and Veggie Stir Fry', undefined, 'beef'],
-    ['Steak & Veggie Kabobs', undefined, 'beef'],
-    ['Veggie and Chicken Skewers', undefined, 'chicken'],
-    ['Veggie Burger with Chicken', undefined, 'chicken'],
-    ['Veggie Burger', 'Add a beef patty for $3', 'beef'],
-    ['Fish Tacos', 'Vegan, made with hearts of palm', 'seafood'],
-  ])('a meat word the marker does not modify still wins in %s', (name, description, meat) => {
-    const r = tagItem(kb, { name, description });
-    expect(r.tags.proteins).toContain(meat);
-    expect(r.tags.proteins).not.toContain('vegetarian');
+  it.each<[string, string | undefined]>([
+    // A negated or hedged marker is not a marker.
+    ['Non-Vegetarian Chicken Biryani', undefined],
+    ['Non Vegetarian Chicken Biryani', undefined],
+    ['Not Vegan Chicken Curry', undefined],
+    ['Vegan-friendly Chicken Wings', undefined],
+    ['Vegan Option Chicken Curry', undefined],
+    ['Veggie-style Chicken Bowl', undefined],
+    // Anything but a plain space, and words such as "w", "add" or "half", end a marker's reach.
+    ['Veggie, Chicken Skewers', undefined],
+    ['Vegan: Chicken Wings', undefined],
+    ['Vegan "Chicken" Wings', 'Cauliflower, buffalo sauce'],
+    ['Veggie w Chicken', undefined],
+    ['Beef and Veggie Stir Fry', undefined],
+    ['Steak & Veggie Kabobs', undefined],
+    ['Veggie and Chicken Skewers', undefined],
+    ['Half Veggie Half Sausage Pizza', undefined],
+    // Another meat word anywhere in the name or description keeps the meat.
+    ['Veggie Burger with Chicken', undefined],
+    ['Veggie Burger - Add Sausage', undefined],
+    ['Veggie Burger – Add Sausage', undefined],
+    ['Veggie Burger — Add Sausage', undefined],
+    ['Veggie Burger w ham', undefined],
+    ['Vegan Fish Tacos shrimp', undefined],
+    ['Veggie Burger or Classic Burger', undefined],
+    ['Veggie Burger', 'Veggie patty add beef'],
+    ['Veggie Burger', 'Add a beef patty for $3'],
+    // A dish word between the marker and the meat means the marker modifies that dish, not the meat.
+    ['Veggie Ramen Chashu', undefined],
+    // Markers in the description never override the name.
+    ['Fish Tacos', 'Vegan, made with hearts of palm'],
+    ['Burrito', 'Vegetarian? Ask for no chorizo'],
+    ['Pizza', 'Vegan cheese available on request — Italian sausage, peppers'],
+    ['Pho', 'Vegetarian broth beef brisket'],
+    // Meat words beyond the protein patterns that name a dish.
+    ['Veggie Burger with Bacon', undefined],
+    ['Veggie Burger, Bacon', undefined],
+    ['Veggie Burger', 'Topped with bacon and cheddar'],
+    ['Vegan Burger', 'Add bacon +$2'],
+    ['Plant-Based Burger', 'Smoked bacon, pickles'],
+    ['Veggie Burger with Turkey', undefined],
+    ['Veggie Burger with Lamb', undefined],
+    ['Veggie Pizza', 'Peppers, onions, pepperoni'],
+    ['Vegan Caesar', 'Romaine, anchovy dressing'],
+    ['Vegetable Duck Curry', undefined],
+  ])('keeps the meat in %s (%s)', (name, description) => {
+    const proteins = tagItem(kb, { name, description }).tags.proteins;
+    expect(proteins).not.toContain('vegetarian');
+    expect(proteins.length).toBeGreaterThan(0);
   });
 
   it('does not treat ingredient vegetables as a marker', () => {
     const r = tagItem(kb, { name: 'Vegetable Beef Soup' });
     expect(r.tags.proteins).toContain('beef');
     expect(r.tags.proteins).not.toContain('vegetarian');
+  });
+
+  it('does not tag a negated marker as vegetarian', () => {
+    expect(tagItem(kb, { name: 'Non-Vegetarian Thali' }).tags.proteins).not.toContain('vegetarian');
+  });
+
+  it('reads the marker words from the knowledge base', () => {
+    expect(tagItem(kb, { name: 'Meatless Burger' }).tags.proteins).toEqual(['beef']);
+    const lexicon = kb.lexicon.map((e) =>
+      e.proteins.includes('vegetarian') && new RegExp(e.pattern).test('vegetarian')
+        ? { ...e, pattern: e.pattern.replace('vegetarian', 'vegetarian|meatless') }
+        : e,
+    );
+    expect(tagItem({ ...kb, lexicon }, { name: 'Meatless Burger' }).tags.proteins).toEqual(['vegetarian']);
   });
 });
