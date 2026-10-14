@@ -178,6 +178,10 @@ describe('vegetarian tagging', () => {
     ['Veggie Sausage Pizza', undefined],
     ['Veggie Chorizo', undefined],
     ['Veggie Fish Tacos', undefined],
+    ['Veggie Hot Dog', undefined],
+    ['Veggie Meatballs', undefined],
+    ['Veggie Birria Tacos', undefined],
+    ['Tofu Galbi', undefined],
     ['Vegan Fried Chicken', 'Crispy soy cutlet'],
     ['Veggie Double Cheeseburger', undefined],
     // Markers in the description never override the name.
@@ -222,6 +226,12 @@ describe('vegetarian tagging', () => {
     expect(tagItem(kb, { name: 'Non-Vegetarian Thali' }).tags.proteins).not.toContain('vegetarian');
     expect(tagItem(kb, { name: 'Garden Salad', description: 'Vegan option available' }).tags.proteins).not.toContain('vegetarian');
     expect(tagItem(kb, { name: 'Garden Salad', description: 'Vegan\u2013friendly' }).tags.proteins).not.toContain('vegetarian');
+  });
+
+  it('does not tag a mixed item vegetarian when any marker in it is negated', () => {
+    expect(tagItem(kb, { name: 'Veg & Non-Veg Combo' }).tags.proteins).toEqual([]);
+    expect(tagItem(kb, { name: 'Veg and Non-Veg Thali' }).tags.proteins).toEqual([]);
+    expect(tagItem(kb, { name: 'Veg Thali', description: 'Non-vegetarian version available' }).tags.proteins).toEqual([]);
   });
 
   it.each<[string, string | undefined, string]>([
