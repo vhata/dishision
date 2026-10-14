@@ -43,10 +43,13 @@ function isMarkerEntry(entry: LexiconEntry): boolean {
   return entry.proteins.includes(VEGETARIAN) && regex(entry.pattern).test(VEGETARIAN);
 }
 
-/** A negation just before a marker: "non-vegetarian", "not vegan", "no veggie". */
-const NEGATED_BEFORE = /\b(?:non|not|no)[\s-]*$/;
+/**
+ * A negation just before a marker ("non-vegetarian", "not so vegan", "anti veggie", "ex-vegan"), or any
+ * word joined to the marker by a hyphen or dash ("half-vegan"). \p{Pd} covers the Unicode dashes too.
+ */
+const NEGATED_BEFORE = /(?:\b(?:non|not|no|so|anti|ex)[\s\p{Pd}]*|\p{L}\p{Pd})$/u;
 /** A hedge just after a marker: "vegan-friendly", "veggie-style", "vegan option", "vegetarian available". */
-const HEDGED_AFTER = /^(?:-|\s+(?:options?|optional|available|friendly|style|version|request|upon|possible|adaptable|alternative)\b)/;
+const HEDGED_AFTER = /^(?:\p{Pd}|\s+(?:options?|optional|available|friendly|style|version|request|upon|possible|adaptable|alternative)\b)/u;
 /** Words that end a marker's reach because another component, an option or a negation follows. */
 const BREAK_WORDS = new Set([
   'and',
@@ -71,6 +74,21 @@ const BREAK_WORDS = new Set([
   'sub',
   'swap',
   'choice',
+  // Words for several components served together.
+  'combo',
+  'combos',
+  'platter',
+  'platters',
+  'family',
+  'feast',
+  'loaded',
+  'sampler',
+  'trio',
+  'duo',
+  'mixed',
+  'assorted',
+  'medley',
+  'bundle',
 ]);
 /** Words separated by single plain spaces; any other character ends a marker's reach. */
 const PLAIN_GAP = /^(?: \p{L}+)* $/u;
