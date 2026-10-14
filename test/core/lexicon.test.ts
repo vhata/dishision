@@ -217,6 +217,11 @@ describe('vegetarian tagging', () => {
     ['Dak Galbi', []],
     ['Dwaeji Galbi', []],
     ['Galbi Jjim', ['beef']],
+    // A vegetable before a meat word is usually an ingredient, so only true substitutes hide the meat.
+    ['Coconut Duck Curry', ['poultry']],
+    ['Mushroom Bacon Pasta', ['pork']],
+    ['Soy Sauce Duck', ['poultry']],
+    ['Mushroom Duck Risotto', ['poultry']],
     ['Chicken Hot Dog', ['chicken']],
     ['Classic Hot Dog', ['beef', 'pork']],
   ])('gives the mixed-protein word in %s only the proteins the name allows', (name, proteins) => {
