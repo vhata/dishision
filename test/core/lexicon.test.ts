@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { loadBaseKb } from '../../src/core/kb';
 import { LEXICON_CONFIDENT, tagItem } from '../../src/core/lexicon';
+import { emptyPreferences } from '../../src/core/preferences';
+import { hardFilterReason } from '../../src/core/scoring';
+import type { RestaurantSummary } from '../../src/core/types';
 
 const kb = loadBaseKb();
 
@@ -86,6 +89,17 @@ describe('vegetarian tagging', () => {
     // A negated or hedged marker is not a marker.
     ['Non-Vegetarian Chicken Biryani', undefined],
     ['Non Vegetarian Chicken Biryani', undefined],
+    ['Non\u2013Vegetarian Chicken Biryani', undefined],
+    ['Non\u2010Vegetarian Chicken Biryani', undefined],
+    ['Non\u2011Vegetarian Chicken Biryani', undefined],
+    ['Vegan\u2013friendly Chicken Wings', undefined],
+    ['Not-So-Vegan Fried Chicken', undefined],
+    ['Not So Vegan Burger', undefined],
+    ['Anti-Vegan Burger', undefined],
+    ['Anti Veggie Burger', undefined],
+    ['Ex-Vegan Burger', undefined],
+    ['Ex-Vegetarian Fried Chicken', undefined],
+    ['Half-Vegan Burger', undefined],
     ['Not Vegan Chicken Curry', undefined],
     ['Vegan-friendly Chicken Wings', undefined],
     ['Vegan Option Chicken Curry', undefined],
@@ -101,6 +115,10 @@ describe('vegetarian tagging', () => {
     ['Half Veggie Half Sausage Pizza', undefined],
     // A break word ends the reach even where the lexicon also reads it as a modifier ("side").
     ['Veggie Side Chicken Skewer', undefined],
+    ['Veggie Combo Chicken', undefined],
+    ['Veggie Platter Chicken', undefined],
+    ['Veggie Loaded Chicken Fries', undefined],
+    ['Veggie Family Chicken Feast', undefined],
     // Another meat word anywhere in the name or description keeps the meat.
     ['Veggie Burger with Chicken', undefined],
     ['Veggie Burger - Add Sausage', undefined],
@@ -115,7 +133,7 @@ describe('vegetarian tagging', () => {
     ['Veggie Ramen Chashu', undefined],
     // Only known modifiers ("fried", "crispy", "double") may sit between the marker and the meat.
     ['Veggie Supreme Chicken Pizza', undefined],
-    ['Veggie Lovers Meat Pizza', undefined],
+    ['Veggie Lovers Chicken Pizza', undefined],
     // Markers in the description never override the name.
     ['Fish Tacos', 'Vegan, made with hearts of palm'],
     ['Burrito', 'Vegetarian? Ask for no chorizo'],
@@ -137,6 +155,9 @@ describe('vegetarian tagging', () => {
     ['Vegetable Duck Curry', undefined],
     ['Veggie Burger with Bratwurst', undefined],
     ['Veggie Burger with Andouille', undefined],
+    ['Veggie Burger with Spam', undefined],
+    ['Vegan Poke Bowl', 'Ahi, rice, seaweed'],
+    ['Veggie Bowl', 'Kalbi short rib, rice'],
     ['Veggie Burger', 'Topped with foie gras'],
     ['Vegan Hot Dog', 'Served with a beef frank'],
   ])('keeps the meat in %s (%s)', (name, description) => {
@@ -154,6 +175,60 @@ describe('vegetarian tagging', () => {
   it('does not tag a negated or hedged marker as vegetarian', () => {
     expect(tagItem(kb, { name: 'Non-Vegetarian Thali' }).tags.proteins).not.toContain('vegetarian');
     expect(tagItem(kb, { name: 'Garden Salad', description: 'Vegan option available' }).tags.proteins).not.toContain('vegetarian');
+  });
+
+  it.each<[string, string | undefined, string]>([
+    ['Lamb Vindaloo', undefined, 'lamb'],
+    ['Mutton Biryani', undefined, 'lamb'],
+    ['Goat Curry', undefined, 'goat'],
+    ['Venison Stew', undefined, 'game'],
+    ['Roast Duck', undefined, 'poultry'],
+    ['Turkey Club', undefined, 'poultry'],
+    ['Veal Parmesan', undefined, 'beef'],
+    ['Wagyu Steak', undefined, 'beef'],
+    ['Bison Burger', undefined, 'beef'],
+    ['Bacon Burger', undefined, 'pork'],
+    ['Caesar Salad', 'Anchovy dressing', 'seafood'],
+    ['Unagi Don', undefined, 'seafood'],
+  ])('tags %s with its own protein', (name, description, protein) => {
+    expect(tagItem(kb, { name, description }).tags.proteins).toContain(protein);
+  });
+
+  it('does not map lamb, goat, game or poultry onto beef or chicken', () => {
+    for (const name of ['Lamb Vindaloo', 'Goat Curry', 'Venison Stew']) {
+      expect(tagItem(kb, { name }).tags.proteins, name).not.toContain('beef');
+    }
+    for (const name of ['Roast Duck', 'Turkey Club']) expect(tagItem(kb, { name }).tags.proteins, name).not.toContain('chicken');
+  });
+
+  it.each<[string, string | undefined, string[]]>([
+    ['Goat Cheese Salad', undefined, []],
+    ['Beet and Goat Cheese Salad', undefined, []],
+    ["Goat's Cheese Tart", undefined, []],
+    ['Roasted Vegetable Flatbread', 'Peppers, onions, goat cheese', ['vegetarian']],
+    ['Vegetable Egg Rolls', 'With duck sauce', ['vegetarian']],
+    ['Avocado Roll', 'Avocado, cucumber, eel sauce', []],
+    ['Stuffed Vegetable Marrow', undefined, ['vegetarian']],
+    ['Crab Meat Fried Rice', undefined, ['seafood']],
+    ['Coconut Meat Smoothie', undefined, []],
+    ['Plant-Based Meat Sauce Pasta', undefined, ['vegetarian']],
+  ])('does not read %s as meat', (name, description, proteins) => {
+    expect(tagItem(kb, { name, description }).tags.proteins).toEqual(proteins);
+  });
+
+  it('keeps lamb, goat and duck dishes when the diner avoids beef or chicken', () => {
+    const restaurant: RestaurantSummary = { placeId: 'r', name: 'R', cuisine: 'indian', rating: 4.5, userRatingCount: 100, openNow: true };
+    const item = (name: string) => {
+      const t = tagItem(kb, { name });
+      return { id: name, placeId: 'r', name, scores: t.scores, tags: t.tags };
+    };
+    // The exclusions "no beef" and "no chicken" produce in the Other text.
+    const noBeef = { ...emptyPreferences(), exclusions: ['beef'] };
+    const noChicken = { ...emptyPreferences(), exclusions: ['chicken'] };
+    expect(hardFilterReason(item('Lamb Vindaloo'), restaurant, noBeef, { kb })).toBeNull();
+    expect(hardFilterReason(item('Goat Curry'), restaurant, noBeef, { kb })).toBeNull();
+    expect(hardFilterReason(item('Roast Duck'), restaurant, noChicken, { kb })).toBeNull();
+    expect(hardFilterReason(item('Beef Curry'), restaurant, noBeef, { kb })).toBe('excluded');
   });
 
   it('reads the marker words from the knowledge base', () => {
