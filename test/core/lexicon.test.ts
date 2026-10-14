@@ -136,6 +136,7 @@ describe('vegetarian tagging', () => {
     ['Vegan Caesar', 'Romaine, anchovy dressing'],
     ['Vegetable Duck Curry', undefined],
     ['Veggie Burger with Bratwurst', undefined],
+    ['Veggie Burger with Andouille', undefined],
     ['Veggie Burger', 'Topped with foie gras'],
     ['Vegan Hot Dog', 'Served with a beef frank'],
   ])('keeps the meat in %s (%s)', (name, description) => {
