@@ -72,8 +72,9 @@ function isNegated(text: string, marker: Span): boolean {
   return NEGATED_BEFORE.test(text.slice(0, marker.start));
 }
 
+/** A hedged marker is no claim; a negated one is handled for the whole item, see `negatedMarker`. */
 function isClaim(text: string, marker: Span): boolean {
-  return !isNegated(text, marker) && !HEDGED_AFTER.test(text.slice(marker.end));
+  return !HEDGED_AFTER.test(text.slice(marker.end));
 }
 
 /**
@@ -127,7 +128,7 @@ export function tagItem(kb: KnowledgeBase, item: { name: string; description?: s
     const found = spansOf(entry.pattern, text);
     const strength = markerStrength(entry);
     if (strength) {
-      // A negated or hedged marker ("non-vegetarian", "vegan option") says nothing about the dish.
+      // A hedged marker ("vegan option") says nothing about the dish; a negated one ("non-veg") rules it out.
       const claims = found.filter((s) => isClaim(text, s));
       if (found.some((s) => isNegated(text, s))) negatedMarker = true;
       markers.push(...claims.map((s) => ({ ...s, weak: strength === 'weak' })));
