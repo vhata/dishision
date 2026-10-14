@@ -68,8 +68,12 @@ function markerStrength(entry: LexiconEntry): 'strong' | 'weak' | undefined {
 const NEGATED_BEFORE = /(?:\b(?:non|not|no|so|anti|ex)[\s\p{Pd}]*|\p{L}\p{Pd})$/u;
 /** A hedge just after a marker: "vegan-friendly", "veggie-style", "vegan option", "vegetarian available". */
 const HEDGED_AFTER = /^(?:\p{Pd}|\s+(?:options?|optional|available|friendly|style|version|request|upon|possible|adaptable|alternative)\b)/u;
+function isNegated(text: string, marker: Span): boolean {
+  return NEGATED_BEFORE.test(text.slice(0, marker.start));
+}
+
 function isClaim(text: string, marker: Span): boolean {
-  return !NEGATED_BEFORE.test(text.slice(0, marker.start)) && !HEDGED_AFTER.test(text.slice(marker.end));
+  return !isNegated(text, marker) && !HEDGED_AFTER.test(text.slice(marker.end));
 }
 
 /**
@@ -109,6 +113,8 @@ export function tagItem(kb: KnowledgeBase, item: { name: string; description?: s
   const markers: Marker[] = [];
   /** Every occurrence of a word that tags a meat protein, in the name or the description. */
   const meat: MeatSpan[] = [];
+  /** A negated marker anywhere ("veg & non-veg combo") means part of the item is not vegetarian. */
+  let negatedMarker = false;
 
   for (const entry of kb.lexicon) {
     if (!regex(entry.pattern).test(text)) continue;
@@ -123,6 +129,7 @@ export function tagItem(kb: KnowledgeBase, item: { name: string; description?: s
     if (strength) {
       // A negated or hedged marker ("non-vegetarian", "vegan option") says nothing about the dish.
       const claims = found.filter((s) => isClaim(text, s));
+      if (found.some((s) => isNegated(text, s))) negatedMarker = true;
       markers.push(...claims.map((s) => ({ ...s, weak: strength === 'weak' })));
       if (claims.length > 0) for (const p of entry.proteins) proteins.add(p);
     } else {
@@ -134,6 +141,8 @@ export function tagItem(kb: KnowledgeBase, item: { name: string; description?: s
     cuisine ??= entry.cuisine;
     archetypeId ??= entry.archetypeId;
   }
+
+  if (negatedMarker) proteins.delete(VEGETARIAN);
 
   // Meat wins over a vegetarian tag unless a name marker unambiguously makes it a style.
   if (proteins.has(VEGETARIAN) && [...proteins].some((p) => p !== VEGETARIAN)) {
