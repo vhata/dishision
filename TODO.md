@@ -22,6 +22,11 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 
 ### Unprioritized
 
+- [CORE] `kb-cuisine-collides-with-protein` — **A knowledge base cuisine value cannot share a name with a protein key.** An overlay archetype with cuisine `seafood` or `vegetarian` would send that exclusion to cuisine-tag matching instead of ingredient matching once cuisine exclusions match tags only.
+  - Source: las-vegas session, re-review of PR #17 (cuisine-exclusion-tag-only), 2026-10-13
+  - Starting point: the semantic validator added by `kb-semantic-validation-on-load`; reject cuisine values equal to a protein key
+  - Related: `cuisine-exclusion-tag-only`
+
 - [TOOLING] `blame-ignore-biome-reformat` — **`.git-blame-ignore-revs` lists the squash commit that adopted Biome, so blame skips the whole-tree reformat.** The SHA only exists once that PR lands.
   - Source: PR #9 (adopt-formatter-and-linter), 2026-10-12
   - Blocked by: PR #9 landing on main

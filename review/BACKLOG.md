@@ -17,6 +17,7 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
   - Related: `other-text-keyword-false-positives`, `cuisine-exclusion-tag-only`
   - Evidence from the review of PR #17 (2026-10-13): the keyword parser maps "no fish", "no seafood" and "no tuna" all to the single exclusion `fish`, and only substring matching in `isExcluded` keeps Shellfish Platter, Catfish Po Boy, Grilled Swordfish and Thai Fishcakes excluded under it; a whole-word switch let all four through. Ingredient exclusions stay substring-matched on allergen-safety grounds until this entry lands.
   - Acceptance: any move away from substring matching for ingredient exclusions carries regression tests for those four dishes and for nut/walnut, milk/buttermilk, cheese/cheeseburger and crab/crabmeat.
+  - Evidence from the re-review of PR #17 (2026-10-13): the keyword parser reduces "no greek yogurt", "no american cheese", "no italian sausage" and "no chinese sausage" (probably also "no japanese mayo" and "no mexican crema") to the cuisine word alone and never records the ingredient noun. Main's cuisine substring match caught the yogurt dishes by accident; once cuisine exclusions match cuisine tags only, nothing does, so the parser must record the ingredient.
 
 ## P2 Normal
 
