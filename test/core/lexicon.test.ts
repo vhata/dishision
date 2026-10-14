@@ -92,6 +92,7 @@ describe('vegetarian tagging', () => {
     ['Non\u2013Vegetarian Chicken Biryani', undefined],
     ['Non\u2010Vegetarian Chicken Biryani', undefined],
     ['Non\u2011Vegetarian Chicken Biryani', undefined],
+    ['Non \u2013 Vegetarian Chicken Biryani', undefined],
     ['Vegan\u2013friendly Chicken Wings', undefined],
     ['Not-So-Vegan Fried Chicken', undefined],
     ['Not So Vegan Burger', undefined],
@@ -175,6 +176,7 @@ describe('vegetarian tagging', () => {
   it('does not tag a negated or hedged marker as vegetarian', () => {
     expect(tagItem(kb, { name: 'Non-Vegetarian Thali' }).tags.proteins).not.toContain('vegetarian');
     expect(tagItem(kb, { name: 'Garden Salad', description: 'Vegan option available' }).tags.proteins).not.toContain('vegetarian');
+    expect(tagItem(kb, { name: 'Garden Salad', description: 'Vegan\u2013friendly' }).tags.proteins).not.toContain('vegetarian');
   });
 
   it.each<[string, string | undefined, string]>([
