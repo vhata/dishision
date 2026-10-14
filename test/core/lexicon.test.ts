@@ -99,6 +99,8 @@ describe('vegetarian tagging', () => {
     ['Steak & Veggie Kabobs', undefined],
     ['Veggie and Chicken Skewers', undefined],
     ['Half Veggie Half Sausage Pizza', undefined],
+    // A break word ends the reach even where the lexicon also reads it as a modifier ("side").
+    ['Veggie Side Chicken Skewer', undefined],
     // Another meat word anywhere in the name or description keeps the meat.
     ['Veggie Burger with Chicken', undefined],
     ['Veggie Burger - Add Sausage', undefined],
@@ -148,8 +150,9 @@ describe('vegetarian tagging', () => {
     expect(r.tags.proteins).not.toContain('vegetarian');
   });
 
-  it('does not tag a negated marker as vegetarian', () => {
+  it('does not tag a negated or hedged marker as vegetarian', () => {
     expect(tagItem(kb, { name: 'Non-Vegetarian Thali' }).tags.proteins).not.toContain('vegetarian');
+    expect(tagItem(kb, { name: 'Garden Salad', description: 'Vegan option available' }).tags.proteins).not.toContain('vegetarian');
   });
 
   it('reads the marker words from the knowledge base', () => {
