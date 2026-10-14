@@ -222,6 +222,9 @@ describe('vegetarian tagging', () => {
     ['Mushroom Bacon Pasta', ['pork']],
     ['Soy Sauce Duck', ['poultry']],
     ['Mushroom Duck Risotto', ['poultry']],
+    ['Mushroom Meatballs', ['beef', 'pork']],
+    ['Lentil Meatballs', ['vegetarian']],
+    ['Carrot Hot Dog', []],
     ['Chicken Hot Dog', ['chicken']],
     ['Classic Hot Dog', ['beef', 'pork']],
   ])('gives the mixed-protein word in %s only the proteins the name allows', (name, proteins) => {
