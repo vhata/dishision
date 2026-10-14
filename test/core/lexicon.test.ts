@@ -171,6 +171,9 @@ describe('vegetarian tagging', () => {
     ['Veg Chicken Biryani', undefined],
     ['Non-Veg Thali', 'Chicken curry, dal, rice'],
     ['Non-Vegan Hot Dog', undefined],
+    // Vegetarian ingredient words are not markers, even before a dish name.
+    ['Mushroom Burger', undefined],
+    ['Tofu Pozole', 'Pork shoulder, hominy, tofu'],
     // Missed vegetarian dishes, accepted so that no word between can hide real meat.
     ['Veggie Sausage Pizza', undefined],
     ['Veggie Chorizo', undefined],
