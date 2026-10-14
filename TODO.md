@@ -26,11 +26,9 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
   - Source: las-vegas session, re-review of PR #17 (cuisine-exclusion-tag-only), 2026-10-13
   - Starting point: the semantic validator added by `kb-semantic-validation-on-load`; reject cuisine values equal to a protein key
   - Related: `cuisine-exclusion-tag-only`
-
-- [TOOLING] `blame-ignore-biome-reformat` — **`.git-blame-ignore-revs` lists the squash commit that adopted Biome, so blame skips the whole-tree reformat.** The SHA only exists once that PR lands.
-  - Source: PR #9 (adopt-formatter-and-linter), 2026-10-12
-  - Blocked by: PR #9 landing on main
-  - Starting point: append the full SHA with a comment line naming the change; the contract allows this file on `main` directly only when the owner says so for the case
+- [KB] `heaviness-asked-when-already-set` — **Decide whether the heaviness question is skipped when heaviness is already known.** With feel "comforting" and "nothing heavy" typed in the avoid question, heaviness is already -0.7 and round two still asks "How heavy should it be?", whose answer overwrites it; the spec's rule (comforting set, rich unset) does not mention heaviness.
+  - Source: independent review of PR #13 (heaviness-node-applies-condition), 2026-10-13
+  - Starting point: `kb/questions.json` heaviness node `applies`; design spec round-two list
 
 ## Needs proof of concept
 
@@ -113,3 +111,18 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
   - `@cloudflare/vitest-plugin` 1.4.0 declares `vitest: ^4.1.0 || ^5.0.0` (checked at triage, 2026-10-12), so the blocker has cleared.
 
 ### Unprioritized
+
+- [TOOLING] `blame-ignore-biome-reformat` — **`.git-blame-ignore-revs` lists the squash commit that adopted Biome, so blame skips the whole-tree reformat.** PR #9 landed as 0f5199e, so the SHA now exists.
+  - Source: PR #9 (adopt-formatter-and-linter), 2026-10-12
+  - Starting point: append the full SHA with a comment line naming the change; the contract allows this file on `main` directly only when the owner says so for the case
+- [CORE] `other-text-meal-capture-accuracy` — **Recent and planned meals typed in "Other" record dish names and never function words, and cravings match singular and plural dishes alike.** "had to work late" records recentMeals ["to"], "had a big burger" ["big"] and "had a hand-held burrito" ["hand"]; "I want burritos" reads nothing because only "burrito" is in the vocabulary; planned meals record only the cuisine while recent meals record the dish and the cuisine.
+  - Source: PR #18 (other-text-keyword-false-positives) and its independent review, 2026-10-13
+  - Starting point: `src/core/otherText.ts` keywordParse recent-meal capture, mealName and the craving vocabulary
+  - Related: `other-text-exclusions-match-items`
+- [WORKER] `bad-answer-copy-for-diners` — **A rejected answer returns diner-facing copy instead of the core's developer message.** The `bad_answer` path returns the text `applyAnswer` throws, such as "unknown option X for <node>", which echoes the input and is shown as-is by the client.
+  - Source: PR #15 (error-handler-leaks-message), 2026-10-13
+  - Starting point: `src/worker/routes/session.ts` answer route `bad_answer`; `src/core/questions.ts` applyAnswer
+  - Related: `worker-request-hardening`
+- [DOCS] `decisions-formatter-row-stale` — **`docs/DECISIONS.md` no longer says there is no formatter or linter gate.** The row "No formatter or linter gate yet" predates the Biome adoption in PR #9.
+  - Source: independent review of PR #19 (bump-vitest-to-five), 2026-10-13
+  - Starting point: `docs/DECISIONS.md` gates table; `docs/QUALITY.md` already describes the Biome gates
