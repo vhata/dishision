@@ -6,7 +6,7 @@ Read when changing code or preparing a PR. This document describes the gates as 
 
 - Deterministic ranking: the same preferences and candidates produce the same recommendation and trace, and tests assert on traces, not just winners.
 - Grounded explanations: every sentence is derived from candidate data and the trace; a test exists for each way an explanation could lie (claiming an avoided quality, naming an absent ingredient).
-- Knowledge base as data: `kb/*.json` validates against the Zod schema at load, and scenario tests catch a content edit that changes a spec scenario's outcome.
+- Knowledge base as data: `kb/*.json` validates against the Zod schema and the semantic checks in `src/core/kb/validate.ts` at load, so no row can make tagging or answering throw, and scenario tests catch a content edit that changes a spec scenario's outcome.
 - Free-plan safety: Worker code never calls out during a request in phase 1; when real providers arrive, budget guards are tested before the provider is wired in.
 - Boundaries held: `src/core/` imports nothing from the Worker, the DOM or a provider; sessions store coarse location only; every D1 write is Zod-validated first. The invariants are listed in [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 - Deliberately manual: visual rendering of the SPA (the README checklist) and judgement about whether a recommendation is a good dinner.

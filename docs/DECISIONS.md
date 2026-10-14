@@ -4,6 +4,14 @@ Non-obvious choices and their trade-offs, dated, newest section first. Read the 
 
 Design-level decisions (free-tier constraints, minimal LLM use, no one-way doors, Google Places terms, D1-only storage) are in the design spec and are not restated here. Task-level rulings made while implementing phase 1 are in [`superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md`](superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md).
 
+## 2026-10-13
+
+| Decision | Reason and trade-off |
+| --- | --- |
+| Overlay ids are `kb_` plus the `kb_additions` row id; the payload id is ignored. | The design spec derives them from the row id, and the row id is the table's primary key, so two rows can never share an id and a payload id cannot smuggle in an unprefixed or colliding one. The cost is opaque ids (`kb_<uuid>`) in traces and in any export promoted back into the repo, where they should be renamed. Base ids may not start with `kb_`, so an overlay id never collides with a base one. |
+| `mergeKb` merges archetype rows before option and lexicon rows, and checks each row against the knowledge base built so far. | An option effect (`archetypes.<id>`) or lexicon entry (`archetypeId`) may name an overlay archetype; ordering by kind lets it do so whatever the rows' creation order. A row that fails is dropped alone with its reason, in input order, so one bad approval cannot take down the others. |
+| The field models the validator checks against (`PREFERENCE_FIELDS`, `DERIVED_FIELDS`) are declared in `src/core/kb/validate.ts`, not derived at runtime from `preferences.ts` or `questions.ts`. | Those modules do not export a field model, and `questions.ts` imports the knowledge base. The declarations are tied to the types instead: each `satisfies` a mapped type over `DinnerPreferences` or `Derived`, so tsc fails when a field is added, renamed or retyped without a matching spec, and the hunger, leftovers and budget key lists must name every member of their type. The gap: an entry added only to the runtime field sets inside `preferences.ts`, with no change to the interface, is not caught. |
+
 ## 2026-10-12
 
 | Decision | Reason and trade-off |

@@ -22,6 +22,11 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 
 ### Unprioritized
 
+- [CORE] `kb-overlay-pattern-backtracking` — **An overlay lexicon pattern cannot hang tagging through catastrophic backtracking.** Load-time validation rejects patterns that fail to compile, but accepts `(a+)+$`, which would stall `tagItem` on a long menu description rather than throw.
+  - Source: review/kb-semantic-validation-on-load, 2026-10-13
+  - Starting point: `src/core/kb/validate.ts` pattern check; options include rejecting nested quantifiers, capping pattern and input length, or a linear-time matcher
+  - Blocked by: overlay rows becoming reachable from a user or admin path; nothing calls mergeKb outside core yet
+
 - [TOOLING] `blame-ignore-biome-reformat` — **`.git-blame-ignore-revs` lists the squash commit that adopted Biome, so blame skips the whole-tree reformat.** The SHA only exists once that PR lands.
   - Source: PR #9 (adopt-formatter-and-linter), 2026-10-12
   - Blocked by: PR #9 landing on main
