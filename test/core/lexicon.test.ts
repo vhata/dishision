@@ -70,10 +70,8 @@ describe('vegetarian tagging', () => {
     ['Veggie Burger', 'Black bean patty, lettuce, tomato, brioche bun'],
     ['Vegan Fish Tacos', 'Beer-battered hearts of palm, slaw, lime crema'],
     ['Plant-Based Smash Burger', 'Two patties, American cheese, pickles'],
-    ['Vegan Fried Chicken', 'Crispy soy cutlet'],
     ['Plant Based Chicken Sandwich', 'Crispy seitan cutlet, pickles, mayo'],
     ['Vegetarian Bun Bo Hue', 'Lemongrass broth, rice noodles, tofu'],
-    ['Veggie Double Cheeseburger', undefined],
   ])('a marker in the name keeps %s vegetarian and drops the meat the name implied', (name, description) => {
     expect(tagItem(kb, { name, description }).tags.proteins).toEqual(['vegetarian']);
   });
@@ -105,7 +103,7 @@ describe('vegetarian tagging', () => {
     ['Vegan-friendly Chicken Wings', undefined],
     ['Vegan Option Chicken Curry', undefined],
     ['Veggie-style Chicken Bowl', undefined],
-    // Anything but a plain space, and words such as "w", "add" or "half", end a marker's reach.
+    // The marker must immediately precede the meat: punctuation or any word between keeps the meat.
     ['Veggie, Chicken Skewers', undefined],
     ['Vegan: Chicken Wings', undefined],
     ['Vegan "Chicken" Wings', 'Cauliflower, buffalo sauce'],
@@ -114,7 +112,6 @@ describe('vegetarian tagging', () => {
     ['Steak & Veggie Kabobs', undefined],
     ['Veggie and Chicken Skewers', undefined],
     ['Half Veggie Half Sausage Pizza', undefined],
-    // A break word ends the reach even where the lexicon also reads it as a modifier ("side").
     ['Veggie Side Chicken Skewer', undefined],
     ['Veggie Combo Chicken', undefined],
     ['Veggie Platter Chicken', undefined],
@@ -130,11 +127,24 @@ describe('vegetarian tagging', () => {
     ['Veggie Burger or Classic Burger', undefined],
     ['Veggie Burger', 'Veggie patty add beef'],
     ['Veggie Burger', 'Add a beef patty for $3'],
-    // A dish word between the marker and the meat means the marker modifies that dish, not the meat.
     ['Veggie Ramen Chashu', undefined],
-    // Only known modifiers ("fried", "crispy", "double") may sit between the marker and the meat.
     ['Veggie Supreme Chicken Pizza', undefined],
     ['Veggie Lovers Chicken Pizza', undefined],
+    ['Vegan Cheese Chicken Quesadilla', undefined],
+    ['Vegan Cheese Chicken Pizza', undefined],
+    ['Vegan Mayo Chicken Sandwich', undefined],
+    ['Vegan Aioli Shrimp Roll', undefined],
+    ['Vegetarian Kimchi Pork Fried Rice', undefined],
+    ['Veggie Curry Chicken', undefined],
+    ['Veggie Soup Chicken', undefined],
+    ['Veggie Salad Chicken', undefined],
+    ['Veggie Pickles Chicken Sandwich', undefined],
+    ['Veggie Starter Chicken Wings', undefined],
+    ['Veggie Cup Chicken Noodle Soup', undefined],
+    ['Veggie Whole Chicken', undefined],
+    // Missed vegetarian dishes, accepted so that no word between can hide real meat.
+    ['Vegan Fried Chicken', 'Crispy soy cutlet'],
+    ['Veggie Double Cheeseburger', undefined],
     // Markers in the description never override the name.
     ['Fish Tacos', 'Vegan, made with hearts of palm'],
     ['Burrito', 'Vegetarian? Ask for no chorizo'],
@@ -196,6 +206,23 @@ describe('vegetarian tagging', () => {
     expect(tagItem(kb, { name, description }).tags.proteins).toContain(protein);
   });
 
+  it.each<[string, string[]]>([
+    ['Chicken Meatballs', ['chicken']],
+    ['Turkey Meatballs', ['poultry']],
+    ['Beef Meatballs', ['beef']],
+    ['Spaghetti and Meatballs', ['beef', 'pork']],
+    ['Chicken Birria Tacos', ['chicken']],
+    ['Birria de Pollo', ['chicken']],
+    ['Birria Tacos', ['beef', 'goat']],
+    ['Dak Galbi', []],
+    ['Dwaeji Galbi', []],
+    ['Galbi Jjim', ['beef']],
+    ['Chicken Hot Dog', ['chicken']],
+    ['Classic Hot Dog', ['beef', 'pork']],
+  ])('gives the mixed-protein word in %s only the proteins the name allows', (name, proteins) => {
+    expect(tagItem(kb, { name }).tags.proteins).toEqual(proteins);
+  });
+
   it('does not map lamb, goat, game or poultry onto beef or chicken', () => {
     for (const name of ['Lamb Vindaloo', 'Goat Curry', 'Venison Stew']) {
       expect(tagItem(kb, { name }).tags.proteins, name).not.toContain('beef');
@@ -214,6 +241,21 @@ describe('vegetarian tagging', () => {
     ['Crab Meat Fried Rice', undefined, ['seafood']],
     ['Coconut Meat Smoothie', undefined, []],
     ['Plant-Based Meat Sauce Pasta', undefined, ['vegetarian']],
+    ['Goat-Cheese Tart', undefined, []],
+    ['Goat Gouda Melt', undefined, []],
+    ['Goat Ricotta Toast', undefined, []],
+    ['Goat Chevre Crostini', undefined, []],
+    ['Duck Egg Fried Rice', undefined, []],
+    ['Avocado Roll', 'Avocado, cucumber, eel-sauce drizzle', []],
+    // A plant substitute named before a meat word is not meat.
+    ['Mushroom Jerky', undefined, ['vegetarian']],
+    ['Eggplant Jerky', undefined, []],
+    ['Vegetarian Mock Duck', undefined, ['vegetarian']],
+    ['Mock Duck Curry', undefined, []],
+    ['Peking-style Tofu Duck', undefined, ['vegetarian']],
+    ['Tempeh Bacon Sandwich', undefined, ['vegetarian']],
+    ['Coconut Bacon BLT', undefined, []],
+    ['Carrot Lox Bagel', undefined, []],
   ])('does not read %s as meat', (name, description, proteins) => {
     expect(tagItem(kb, { name, description }).tags.proteins).toEqual(proteins);
   });
