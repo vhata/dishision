@@ -1,5 +1,5 @@
-import type { KnowledgeBase } from './kb/schema';
-import { PROTEIN_KEYS } from './preferences';
+import type { KnowledgeBase, LexiconEntry } from './kb/schema';
+import type { ProteinKey } from './preferences';
 import type { ItemTags, ScoreKey, Scores } from './types';
 
 export interface TagResult {
@@ -22,51 +22,90 @@ function regex(pattern: string, flags = 'i'): RegExp {
   return re;
 }
 
-/** Proteins that contradict a vegetarian tag: every protein key except vegetarian itself. */
-const MEAT_PROTEINS: readonly string[] = PROTEIN_KEYS.filter((p) => p !== 'vegetarian');
+/** The one protein tag that is not meat; every other protein tag contradicts it. */
+const VEGETARIAN: ProteinKey = 'vegetarian';
 
-/** Words that declare the dish they modify meat-free, unlike ingredient words such as "tofu" or "vegetables". */
-const DIET_MARKER = /\b(?:vegetarian|vegan|veggie|plant[- ]?based)\b/g;
-
-/** Where a marker's reach ends: a conjunction or punctuation that starts another component of the dish. */
-const PHRASE_BREAK = /\b(?:and|with|or|plus)\b|[,;:&+/()|.!]/;
-
-/**
- * Spans of `text` a diet marker modifies, from just after each marker to the next phrase break or the
- * end of its field. "veggie burger" covers "burger"; "beef and veggie stir fry" covers only "stir fry".
- */
-function markerSpans(fields: readonly { text: string; start: number }[]): [number, number][] {
-  const spans: [number, number][] = [];
-  for (const { text, start } of fields) {
-    for (const m of text.matchAll(DIET_MARKER)) {
-      const from = m.index + m[0].length;
-      const rest = text.slice(from);
-      const brk = rest.search(PHRASE_BREAK);
-      spans.push([start + from, start + from + (brk === -1 ? rest.length : brk)]);
-    }
-  }
-  return spans;
+interface Span {
+  start: number;
+  end: number;
 }
 
-/** True when every occurrence of the pattern sits inside a marker's span, so the marker overrides it. */
-function onlyUnderMarker(pattern: string, text: string, spans: readonly [number, number][]): boolean {
-  if (spans.length === 0) return false;
-  let seen = false;
-  for (const m of text.matchAll(regex(pattern, 'gi'))) {
-    seen = true;
-    const end = m.index + m[0].length;
-    if (!spans.some(([from, to]) => m.index >= from && end <= to)) return false;
+function spansOf(pattern: string, text: string): Span[] {
+  return [...text.matchAll(regex(pattern, 'gi'))].map((m) => ({ start: m.index, end: m.index + m[0].length }));
+}
+
+/**
+ * Diet-marker entries are the vegetarian entries whose pattern recognises the word "vegetarian" itself;
+ * their other words ("vegan", "veggie", "plant-based") live only in the knowledge base. Ingredient
+ * entries ("tofu", "vegetables") tag vegetarian too but are not markers.
+ */
+function isMarkerEntry(entry: LexiconEntry): boolean {
+  return entry.proteins.includes(VEGETARIAN) && regex(entry.pattern).test(VEGETARIAN);
+}
+
+/** A negation just before a marker: "non-vegetarian", "not vegan", "no veggie". */
+const NEGATED_BEFORE = /\b(?:non|not|no)[\s-]*$/;
+/** A hedge just after a marker: "vegan-friendly", "veggie-style", "vegan option", "vegetarian available". */
+const HEDGED_AFTER = /^(?:-|\s+(?:options?|optional|available|friendly|style|version|request|upon|possible|adaptable|alternative)\b)/;
+/** Words that end a marker's reach because another component, an option or a negation follows. */
+const BREAK_WORDS = new Set([
+  'and',
+  'with',
+  'w',
+  'or',
+  'plus',
+  'add',
+  'adds',
+  'added',
+  'extra',
+  'half',
+  'side',
+  'topped',
+  'top',
+  'served',
+  'over',
+  'on',
+  'no',
+  'not',
+  'without',
+  'sub',
+  'swap',
+  'choice',
+]);
+/** Words separated by single plain spaces; any other character ends a marker's reach. */
+const PLAIN_GAP = /^(?: \p{L}+)* $/u;
+
+function isClaim(text: string, marker: Span): boolean {
+  return !NEGATED_BEFORE.test(text.slice(0, marker.start)) && !HEDGED_AFTER.test(text.slice(marker.end));
+}
+
+/**
+ * True when a marker in the name makes the meat the name implies a style, not an ingredient: "veggie
+ * burger", "vegan fish tacos", "vegan fried chicken". Every meat word in the name and description must
+ * form one phrase in the name, and a claiming marker must reach it over plain words with no break word
+ * and no other dish word between ("veggie ramen chashu" is ramen with chashu). Anything less keeps the meat.
+ */
+function markerOverridesMeat(nameLength: number, text: string, markers: Span[], meat: Span[], dishWords: Span[]): boolean {
+  const sorted = [...meat].sort((a, b) => a.start - b.start);
+  const first = sorted[0];
+  if (!first) return false;
+  const phrase = { ...first };
+  for (const s of sorted.slice(1)) {
+    if (s.start >= phrase.end) return false;
+    phrase.end = Math.max(phrase.end, s.end);
   }
-  return seen;
+  if (phrase.end > nameLength) return false;
+  return markers.some((m) => {
+    if (m.end > phrase.start) return false;
+    const gap = text.slice(m.end, phrase.start);
+    if (!PLAIN_GAP.test(gap) || gap.split(' ').some((w) => BREAK_WORDS.has(w))) return false;
+    return !dishWords.some((d) => d.start < phrase.start && d.end > m.end);
+  });
 }
 
 export function tagItem(kb: KnowledgeBase, item: { name: string; description?: string }): TagResult {
   const name = item.name.toLowerCase();
   const text = `${name} ${(item.description ?? '').toLowerCase()}`;
-  const spans = markerSpans([
-    { text: name, start: 0 },
-    { text: text.slice(name.length + 1), start: name.length + 1 },
-  ]);
   const scores: Scores = {};
   const proteins = new Set<string>();
   const carbs = new Set<string>();
@@ -74,8 +113,12 @@ export function tagItem(kb: KnowledgeBase, item: { name: string; description?: s
   let cuisine: string | undefined;
   let archetypeId: string | undefined;
   const hits: string[] = [];
-  /** Meat proteins named somewhere a diet marker does not reach. */
-  const assertedMeat = new Set<string>();
+  /** Claiming diet markers in the name; only these can override meat. */
+  const nameMarkers: Span[] = [];
+  /** Every occurrence of a word that tags a meat protein, in the name or the description. */
+  const meat: Span[] = [];
+  /** Occurrences of non-meat words that name a dish, cuisine or carb ("ramen", "pizza"). */
+  const dishWords: Span[] = [];
 
   for (const entry of kb.lexicon) {
     if (!regex(entry.pattern).test(text)) continue;
@@ -85,20 +128,31 @@ export function tagItem(kb: KnowledgeBase, item: { name: string; description?: s
       // Specific entries (those naming an archetype) win over generic ones; otherwise take the max.
       scores[key] = entry.archetypeId && current !== undefined ? value : Math.max(current ?? 0, value);
     }
-    for (const p of entry.proteins) proteins.add(p);
-    const meat = entry.proteins.filter((p) => MEAT_PROTEINS.includes(p));
-    if (meat.length > 0 && !onlyUnderMarker(entry.pattern, text, spans)) for (const p of meat) assertedMeat.add(p);
+    const found = spansOf(entry.pattern, text);
+    if (isMarkerEntry(entry)) {
+      // A negated or hedged marker ("non-vegetarian", "vegan option") says nothing about the dish.
+      const claims = found.filter((s) => isClaim(text, s));
+      nameMarkers.push(...claims.filter((s) => s.end <= name.length));
+      if (claims.length > 0) for (const p of entry.proteins) proteins.add(p);
+    } else {
+      for (const p of entry.proteins) proteins.add(p);
+    }
+    if (entry.proteins.some((p) => p !== VEGETARIAN)) meat.push(...found);
+    else if (entry.archetypeId || entry.cuisine || entry.carbs.length > 0) dishWords.push(...found);
     for (const c of entry.carbs) carbs.add(c);
     for (const f of entry.formats) formats.add(f);
     cuisine ??= entry.cuisine;
     archetypeId ??= entry.archetypeId;
   }
 
-  // Meat named only under a diet marker ("veggie burger", "vegan fish tacos") is the dish's style, not
-  // its contents. Any other meat word wins over a vegetarian tag, whether that came from an ingredient
-  // ("mapo tofu with minced pork") or from a marker on another component ("beef and veggie stir fry").
-  for (const p of MEAT_PROTEINS) if (proteins.has(p) && !assertedMeat.has(p)) proteins.delete(p);
-  if (MEAT_PROTEINS.some((p) => proteins.has(p))) proteins.delete('vegetarian');
+  // Meat wins over a vegetarian tag unless a name marker unambiguously makes it a style.
+  if (proteins.has(VEGETARIAN) && [...proteins].some((p) => p !== VEGETARIAN)) {
+    if (markerOverridesMeat(name.length, text, nameMarkers, meat, dishWords)) {
+      for (const p of [...proteins]) if (p !== VEGETARIAN) proteins.delete(p);
+    } else {
+      proteins.delete(VEGETARIAN);
+    }
+  }
 
   if (carbs.size > 0 && scores.carbHeavy === undefined) scores.carbHeavy = 0.6;
   if (carbs.size === 0 && scores.carbHeavy === undefined && hits.length > 0) scores.carbHeavy = 0.2;
