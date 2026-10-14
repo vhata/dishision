@@ -259,6 +259,67 @@ describe('skipped candidate', () => {
   it('picks the candidate that would have won by the most', () => {
     const spicy = single(dish('s', 'Jungle Curry', { spicy: 0.95 }), 'Siam Kitchen', 0.55, {}, { tooSpicy: 0.2 });
     const fiery = single(dish('f', 'Vindaloo', { spicy: 0.95 }), 'Bombay', 0.45, {}, { tooSpicy: 0.2 });
-    expect(explain(primary, light, second, [primary, second, fiery, curry, spicy])).toMatch(/Skipped Massaman Curry/);
+    // Jungle Curry qualifies first (0.75 without its penalty); Massaman Curry would have won by more (0.85).
+    expect(explain(primary, light, second, [primary, second, fiery, spicy, curry])).toMatch(/Skipped Massaman Curry/);
+  });
+});
+
+describe('runner-up shortfalls need the runner-up measured', () => {
+  const beef = applyEffects(emptyPreferences(), [
+    { path: 'proteins.beef', value: 1 },
+    { path: 'desiredQualities.spicy', value: 0.5 },
+  ]);
+  const primary = single(dish('p', 'Bun Bo Hue', { spicy: 0.8 }, ['beef']), 'Lotus Pho', 0.8, { spicy: 0.8, protein: 1 });
+  const runnerUpPair = (a: MenuItem, b: MenuItem, positiveSignals: Record<string, number>): Recommendation => ({
+    ...single(a, 'Siam Kitchen', 0.6, positiveSignals),
+    kind: 'pair',
+    items: [a, b],
+  });
+
+  it('makes no quality claim when one dish of a runner-up pair has no score for it', () => {
+    const pairUp = runnerUpPair(dish('r1', 'Tom Yum', { spicy: 0.2 }, ['beef']), dish('r2', 'Mystery Curry', {}, ['beef']), { protein: 1 });
+    expect(explain(primary, beef, pairUp)).toMatch(/Runner-up: Tom Yum plus Mystery Curry at Siam Kitchen, the next best fit\./);
+  });
+
+  it('makes no protein claim when one dish of a runner-up pair has no protein tags', () => {
+    const pairUp = runnerUpPair(dish('r1', 'Tofu Salad', { spicy: 0.8 }, ['vegetarian']), dish('r2', 'House Noodles', { spicy: 0.8 }, []), {
+      spicy: 0.8,
+    });
+    expect(explain(primary, beef, pairUp)).toMatch(/Runner-up: Tofu Salad plus House Noodles at Siam Kitchen, the next best fit\./);
+  });
+
+  it('makes no protein claim on a runner-up with no protein tags', () => {
+    const untagged = single(dish('r', 'House Special', { spicy: 0.8 }, []), 'Siam Kitchen', 0.6, { spicy: 0.8 });
+    expect(explain(primary, beef, untagged)).toMatch(/Runner-up: House Special at Siam Kitchen, the next best fit\./);
+  });
+
+  it('calls a gap a shortfall at 0.1 or more, and not below', () => {
+    const near = single(dish('r', 'Pho Tai', { spicy: 0.73 }, ['beef']), 'Pho House', 0.6, { spicy: 0.73, protein: 1 });
+    expect(explain(primary, beef, near)).toMatch(/Runner-up: Pho Tai at Pho House, the next best fit\./);
+    const far = single(dish('r', 'Pho Tai', { spicy: 0.68 }, ['beef']), 'Pho House', 0.6, { spicy: 0.68, protein: 1 });
+    expect(explain(primary, beef, far)).toMatch(/Runner-up: Pho Tai at Pho House, not as spicy\./);
+  });
+
+  it('tries the quality the diner wanted most first', () => {
+    const prefs = applyEffects(emptyPreferences(), [
+      { path: 'desiredQualities.comforting', value: 0.8 },
+      { path: 'desiredQualities.spicy', value: 0.3 },
+    ]);
+    const pick = single(dish('p', 'Bun Bo Hue', { spicy: 0.8, comforting: 0.7 }), 'Lotus Pho', 0.8, { spicy: 0.8, comforting: 0.7 });
+    const blander = single(dish('r', 'Tom Yum', { spicy: 0.6, comforting: 0.6 }), 'Siam Kitchen', 0.6, { spicy: 0.6, comforting: 0.6 });
+    expect(explain(pick, prefs, blander)).toMatch(/Runner-up: Tom Yum at Siam Kitchen, not as comforting\./);
+  });
+
+  it('says first-choice only when the pick matches the top protein', () => {
+    const ranked = applyEffects(emptyPreferences(), [
+      { path: 'proteins.beef', value: 1 },
+      { path: 'proteins.chicken', value: 0.6 },
+      { path: 'proteins.pork', value: 0.3 },
+    ]);
+    const chickenPick = single(dish('p', 'Pho Ga', { brothy: 0.9 }, ['chicken']), 'Lotus Pho', 0.8, { brothy: 0.9, protein: 0.6 });
+    const pork = single(dish('r', 'Pork Pho', { brothy: 0.9 }, ['pork']), 'Pho House', 0.6, { brothy: 0.9, protein: 0.3 });
+    const text = explain(chickenPick, ranked, pork);
+    expect(text).toMatch(/Runner-up: Pork Pho at Pho House, a less-wanted protein\./);
+    expect(text).not.toMatch(/first-choice/);
   });
 });

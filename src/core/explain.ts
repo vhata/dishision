@@ -1,4 +1,5 @@
 import type { Recommendation } from './pairs';
+import { desiredVector } from './planner';
 import type { DinnerPreferences } from './preferences';
 import type { ScoreKey } from './types';
 
@@ -19,7 +20,7 @@ const SIGNAL_PHRASES: Record<string, string> = {
   protein: 'the protein you asked for',
 };
 
-/** How a runner-up falls short of the pick on a wanted quality; used only when both dishes carry the score. */
+/** How a runner-up falls short of the pick on a wanted quality; used only when the pick and every runner-up dish carry the score. */
 const SHORTFALL_PHRASES: Record<string, string> = {
   brothy: 'not as brothy',
   brightAcidic: 'not as bright',
@@ -74,15 +75,24 @@ function topPenalty(rec: Recommendation): { key: string; value: number; phrase: 
   return null;
 }
 
-/** The highest score any dish carries for the key, as pair composition combines them; undefined when no dish has it. */
+/** The pick's score for the key: the highest any dish carries, as pair composition combines them. */
 function measured(rec: Recommendation, key: string): number | undefined {
   const known = rec.items.map((i) => i.scores[key as ScoreKey]).filter((v): v is number => v !== undefined);
   return known.length ? Math.max(...known) : undefined;
 }
 
-/** The protein match the scorer recorded; undefined when no dish has protein tags to match against. */
+/**
+ * The runner-up's score for the key, known only when every dish carries it: with one dish unscored the
+ * highest known score is a lower bound, and a shortfall against a lower bound is a guess.
+ */
+function measuredOnEvery(rec: Recommendation, key: string): number | undefined {
+  const values = rec.items.map((i) => i.scores[key as ScoreKey]);
+  return values.every((v): v is number => v !== undefined) ? Math.max(...values) : undefined;
+}
+
+/** The runner-up's protein match as the scorer recorded it; unknown unless every dish has protein tags. */
 function proteinOf(rec: Recommendation): number | undefined {
-  if (rec.items.every((i) => i.tags.proteins.length === 0)) return undefined;
+  if (rec.items.some((i) => i.tags.proteins.length === 0)) return undefined;
   return rec.trace.positiveSignals.protein ?? 0;
 }
 
@@ -106,29 +116,37 @@ function dishesAt(rec: Recommendation): string {
   return `${rec.items.map((i) => i.name).join(' plus ')} at ${rec.restaurant.name}`;
 }
 
-/** The first of the pick's signals, strongest first, on which the runner-up measurably falls short. */
-function shortfall(runnerUp: Recommendation, primary: Recommendation): string | null {
-  for (const [key] of Object.entries(primary.trace.positiveSignals).sort((a, b) => b[1] - a[1])) {
+/**
+ * The first shortfall the runner-up measurably has against the pick's signals, trying the qualities the diner
+ * wanted most first (ties by the pick's signal strength, then key) and protein at its top preference weight.
+ */
+function shortfall(runnerUp: Recommendation, primary: Recommendation, prefs: DinnerPreferences): string | null {
+  const desired = desiredVector(prefs);
+  const topProtein = Math.max(0, ...Object.values(prefs.proteins).map((w) => w ?? 0));
+  const weight = (key: string) => (key === 'protein' ? topProtein : (desired[key] ?? 0));
+  const keys = Object.entries(primary.trace.positiveSignals)
+    .sort((a, b) => weight(b[0]) - weight(a[0]) || b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([key]) => key);
+  for (const key of keys) {
     if (key === 'protein') {
       const theirs = proteinOf(runnerUp);
       const ours = primary.trace.positiveSignals.protein ?? 0;
-      if (theirs !== undefined && ours - theirs >= SHORTFALL_GAP - EPSILON) {
-        return theirs === 0 ? 'not a protein you asked for' : 'not your first-choice protein';
-      }
-      continue;
+      if (theirs === undefined || ours - theirs < SHORTFALL_GAP - EPSILON) continue;
+      if (theirs === 0) return 'not a protein you asked for';
+      return ours >= topProtein - EPSILON ? 'not your first-choice protein' : 'a less-wanted protein';
     }
     const phrase = SHORTFALL_PHRASES[key];
     const ours = measured(primary, key);
-    const theirs = measured(runnerUp, key);
+    const theirs = measuredOnEvery(runnerUp, key);
     if (phrase && ours !== undefined && theirs !== undefined && ours - theirs >= SHORTFALL_GAP - EPSILON) return phrase;
   }
   return null;
 }
 
-function runnerUpSentence(runnerUp: Recommendation, primary: Recommendation): string {
+function runnerUpSentence(runnerUp: Recommendation, primary: Recommendation, prefs: DinnerPreferences): string {
   const reason =
     topPenalty(runnerUp)?.phrase ??
-    shortfall(runnerUp, primary) ??
+    shortfall(runnerUp, primary, prefs) ??
     (primary.score - runnerUp.score <= CLOSE_SECOND + EPSILON ? 'a close second' : 'the next best fit');
   return `Runner-up: ${dishesAt(runnerUp)}, ${reason}.`;
 }
@@ -182,6 +200,6 @@ export function explain(
   if (described) text += ` The menu lists ${described.name} as "${described.description}".`;
   const skipped = skippedSentence(rec, runnerUp, ranked);
   if (skipped) text += ` ${skipped}`;
-  if (runnerUp) text += ` ${runnerUpSentence(runnerUp, rec)}`;
+  if (runnerUp) text += ` ${runnerUpSentence(runnerUp, rec, prefs)}`;
   return text;
 }
