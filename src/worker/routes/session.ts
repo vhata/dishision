@@ -154,9 +154,10 @@ sessionRoutes.post('/:id/feedback', async (c) => {
   const shown = latest.payload.primary;
   const shownIds = shown.items.map((i) => i.id);
   const totalPriceCents = shown.items.reduce((n, i) => n + (i.priceCents ?? 0), 0) || undefined;
-  const archetypeId = shown.items[0]?.archetypeId;
-  const cuisine = shown.items[0]?.cuisine ?? shown.restaurant.cuisine;
-  const prefs = applyFeedback(rec.state.prefs, parsed.data.reason, { cuisine, archetypeId, totalPriceCents });
+  const present = (v: string | undefined): v is string => !!v;
+  const archetypeIds = shown.items.map((i) => i.archetypeId).filter(present);
+  const cuisines = shown.items.map((i) => i.cuisine ?? shown.restaurant.cuisine).filter(present);
+  const prefs = applyFeedback(rec.state.prefs, parsed.data.reason, { cuisines, archetypeIds, totalPriceCents });
   const updated: SessionRecord = {
     ...rec,
     state: { ...rec.state, prefs, rejectedItemIds: [...new Set([...rec.state.rejectedItemIds, ...shownIds])] },

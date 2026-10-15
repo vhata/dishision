@@ -1,6 +1,7 @@
 import { SELF } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
-import type { RecommendResponse, SessionDto } from '../../src/shared/api';
+import type { MenuItemDto, RecommendationDto, RecommendResponse, SessionDto } from '../../src/shared/api';
+import { insertRecommendation } from '../../src/worker/db/recommendations';
 import { testEnv } from './env';
 
 async function post<T>(path: string, body: unknown): Promise<{ status: number; body: T }> {
@@ -50,6 +51,27 @@ async function readySession(extraAvoid: string[] = []): Promise<string> {
   }
   expect(cur.status).toBe('ready');
   return id;
+}
+
+/** A new session whose latest recommendation is a pair of the given dishes at a restaurant of the given cuisine. */
+async function sessionShowing(restaurantCuisine: string, items: MenuItemDto[]): Promise<string> {
+  const id = (await post<SessionDto>('/api/session', { zip: '94110' })).body.id;
+  const primary: RecommendationDto = {
+    kind: 'pair',
+    restaurant: { placeId: 'test_place', name: 'Test Kitchen', cuisine: restaurantCuisine },
+    items,
+    score: 1,
+    explanation: 'Test pair.',
+    menuless: false,
+    links: { doordash: 'https://www.doordash.com/search/store/test', ubereats: 'https://www.ubereats.com/search?q=test' },
+  };
+  await insertRecommendation(testEnv.DB, { id: crypto.randomUUID(), sessionId: id, payload: { primary, runnerUp: null }, trace: {} });
+  return id;
+}
+
+async function debugPrefs(id: string): Promise<NonNullable<SessionDto['debug']>['prefs'] | undefined> {
+  const session = (await SELF.fetch(`http://example.com/api/session/${id}?debug=1`).then((r) => r.json())) as SessionDto;
+  return session.debug?.prefs;
 }
 
 describe('POST /api/session/:id/recommend', () => {
@@ -142,6 +164,49 @@ describe('feedback details', () => {
     const session = (await SELF.fetch(`http://example.com/api/session/${id}?debug=1`).then((r) => r.json())) as SessionDto;
     expect(session.debug?.prefs.recentMeals).toContain(shown.archetypeId);
     expect(session.debug?.prefs.recentMeals).toContain(first.primary!.restaurant.cuisine);
+  });
+
+  it('carries every dish of a shown pair into had_recently', async () => {
+    // Fresh plus beef at a normal hunger picks a two-dish pair from the fixtures.
+    const created = await post<SessionDto>('/api/session', { zip: '94110' });
+    const id = created.body.id;
+    await post(`/api/session/${id}/answer`, { kind: 'single', nodeId: 'hunger', optionId: 'normal' });
+    await post(`/api/session/${id}/answer`, { kind: 'multi', nodeId: 'feel', selections: [{ optionId: 'fresh', intensity: 1 }] });
+    await post(`/api/session/${id}/answer`, { kind: 'multi', nodeId: 'protein', selections: [{ optionId: 'beef', intensity: 1 }] });
+    const first = (await post<RecommendResponse>(`/api/session/${id}/recommend`, { force: true })).body;
+    expect(first.primary?.kind).toBe('pair');
+    const archetypes = first.primary!.items.map((i) => i.archetypeId);
+    expect(archetypes).toHaveLength(2);
+    expect(new Set(archetypes).size).toBe(2);
+    const res = await post<RecommendResponse>(`/api/session/${id}/feedback`, { reason: 'had_recently' });
+    expect(res.status).toBe(200);
+    const session = (await SELF.fetch(`http://example.com/api/session/${id}?debug=1`).then((r) => r.json())) as SessionDto;
+    for (const item of first.primary!.items) {
+      expect(session.debug?.prefs.recentMeals).toContain(item.archetypeId);
+      expect(session.debug?.prefs.recentMeals).toContain(item.cuisine);
+    }
+  });
+
+  it('records each dish cuisine of a pair whose dishes differ in cuisine', async () => {
+    // No fixture pair mixes cuisines, so the shown pair is stored directly.
+    const id = await sessionShowing('american', [
+      { id: 't_tom_yum', name: 'Tom Yum', archetypeId: 'tom_yum', cuisine: 'thai' },
+      { id: 't_tacos', name: 'Fish Tacos', archetypeId: 'fish_tacos', cuisine: 'mexican' },
+    ]);
+    expect((await post(`/api/session/${id}/feedback`, { reason: 'had_recently' })).status).toBe(200);
+    const prefs = await debugPrefs(id);
+    expect(prefs?.recentMeals).toEqual(['tom_yum', 'fish_tacos', 'thai', 'mexican']);
+  });
+
+  it("falls back to the restaurant's cuisine for a dish without one", async () => {
+    // Every fixture dish carries a cuisine, so the shown pair is stored directly.
+    const id = await sessionShowing('american', [
+      { id: 't_tom_yum', name: 'Tom Yum', archetypeId: 'tom_yum', cuisine: 'thai' },
+      { id: 't_burger', name: 'Burger', archetypeId: 'burger' },
+    ]);
+    expect((await post(`/api/session/${id}/feedback`, { reason: 'not_that_cuisine' })).status).toBe(200);
+    const prefs = await debugPrefs(id);
+    expect(prefs?.cuisines).toMatchObject({ thai: -1, american: -1 });
   });
 
   it('refuses further feedback once candidates are exhausted instead of mutating preferences again', async () => {

@@ -67,9 +67,6 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
   - Source: independent review of commit 825592c on phase-1-conversation-and-ranking, 2026-10-09
   - Starting point: `src/core/lexicon.ts` vegetarian rule; only ingredient-level meat words should strip a vegetarian tag that came from ingredient words; derive the meat list from the protein keys rather than a literal
   - Related: `lexicon-tagging-accuracy`
-- [CORE] `pair-feedback-covers-all-items` — **Feedback on a pair recommendation records the archetype and cuisine of every shown dish, not only the first.** `had_recently` on a pair currently penalises one dish's archetype.
-  - Source: independent review of commit 825592c on phase-1-conversation-and-ranking, 2026-10-09
-  - Starting point: `src/worker/routes/session.ts` feedback route reads `items[0]` only
 - [WORKER] `recommendation-row-per-reload` — **Reloading the recommendation screen reads the latest stored recommendation instead of inserting a new row.** The screen's effect fires twice under StrictMode and every reload inserts a `recommendations` row. The two in-flight requests have no ordering guard, so the screen can show a different row from the one feedback treats as latest; harmless while fixtures are deterministic.
   - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: add `GET /api/session/:id/recommendation` in `src/worker/routes/session.ts`; have `src/client/screens/Recommendation.tsx` read before it recommends
