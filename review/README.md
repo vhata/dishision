@@ -4,7 +4,7 @@ Historical codebase reviews are immutable snapshots; the newest snapshot is the 
 
 | Review (UTC) | Type | Reviewed commit | Open findings at close |
 | --- | --- | --- | --- |
-| [2026-10-24 02:49](2026-10-24-0249-full.md) | Full | `d4dc0c1` on main | 57 |
+| [2026-10-24 02:49](2026-10-24-0249-full.md) | Full | `d4dc0c1` on main | 58 |
 | [2026-10-09 09:01](2026-10-09-0901-full.md) | Full | `dc3eff5` on main | 54 |
 
 ## Pending reconciliation

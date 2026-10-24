@@ -86,6 +86,11 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
 
 ## P3 Low
 
+- [TOOLING] `review-cadence-utc-age` — **Review age is computed from UTC dates consistently across local timezones.** The UTC index date 2026-10-24 reports zero days old under TZ=UTC but minus one under TZ=America/Los_Angeles while the local date is October 23.
+  - Source: review/2026-10-24-0249-full.md, 2026-10-24
+  - Findings: `review-age-uses-local-timezone`
+  - Starting point: shared Docket `review-due.sh` date parsing and age calculation; fix upstream and resync the vendored copy
+  - Acceptance: a fixed UTC timestamp and review date produce the same nonnegative age under UTC and America/Los_Angeles, including the day boundary and the review-due threshold
 - [CORE] `pair-must-beat-best-single-margin` — **A pair wins only after beating the best eligible single across all restaurants by PAIR.margin.** The current gate compares the pair with its own constituents; a 0.7375 pair beats a 0.71725 single by 0.02025 and still wins despite a 0.05 margin.
   - Source: review/2026-10-24-0249-full.md, 2026-10-24
   - Findings: `pair-margin-compares-only-constituents`
