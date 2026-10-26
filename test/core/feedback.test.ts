@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { applyFeedback, FEEDBACK_REASONS } from '../../src/core/feedback';
 import { applyEffects, emptyPreferences } from '../../src/core/preferences';
 
-const shown = { cuisine: 'thai', archetypeId: 'green_curry', totalPriceCents: 3000 };
+const shown = { cuisines: ['thai'], archetypeIds: ['green_curry'], totalPriceCents: 3000 };
+const pair = { cuisines: ['thai', 'lao'], archetypeIds: ['tom_yum', 'larb'], totalPriceCents: 3000 };
 
 describe('applyFeedback', () => {
   it('too_heavy lowers richness and sets not-heavy', () => {
@@ -33,8 +34,16 @@ describe('applyFeedback', () => {
   it('had_recently records the cuisine and archetype', () => {
     expect(applyFeedback(emptyPreferences(), 'had_recently', shown).recentMeals).toEqual(['green_curry', 'thai']);
   });
+  it('had_recently on a pair records every shown archetype and cuisine once', () => {
+    const p = applyEffects(emptyPreferences(), [{ path: 'recentMeals', value: 'thai' }]);
+    expect(applyFeedback(p, 'had_recently', pair).recentMeals).toEqual(['thai', 'tom_yum', 'larb', 'lao']);
+  });
   it('not_that_cuisine marks the cuisine down', () => {
     expect(applyFeedback(emptyPreferences(), 'not_that_cuisine', shown).cuisines.thai).toBe(-1);
+  });
+  it('not_that_cuisine on a pair marks down every shown cuisine', () => {
+    const { cuisines } = applyFeedback(emptyPreferences(), 'not_that_cuisine', pair);
+    expect(cuisines).toEqual({ thai: -1, lao: -1 });
   });
   it('another changes nothing and never mutates input', () => {
     const base = emptyPreferences();
