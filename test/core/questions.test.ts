@@ -91,6 +91,26 @@ describe('round two', () => {
     expect(asked.length).toBeLessThanOrEqual(3);
   });
 
+  it('asks heaviness only when comforting is set and rich is unset', () => {
+    const roundTwoFrom = (prefs: ConversationState['prefs']) => {
+      let state: ConversationState = { ...initialState(), prefs, asked: ['hunger', 'feel', 'protein', 'novelty', 'avoid'] };
+      const asked: string[] = [];
+      for (let q = ask(state); q; q = ask(state)) {
+        asked.push(q.node.id);
+        state = step(state, { kind: q.node.kind, nodeId: q.node.id } as AnswerInput);
+      }
+      return asked;
+    };
+    const fresh = applyEffects(emptyPreferences(), [{ path: 'desiredQualities.fresh', value: 1 }]);
+    expect(roundTwoFrom(fresh)).not.toContain('heaviness');
+    const comforting = applyEffects(fresh, [{ path: 'desiredQualities.comforting', value: 0.5 }]);
+    expect(roundTwoFrom(comforting)).toContain('heaviness');
+    const notComforting = applyEffects(fresh, [{ path: 'desiredQualities.comforting', value: -0.8 }]);
+    expect(roundTwoFrom(notComforting)).toContain('heaviness');
+    const comfortingAndRich = applyEffects(comforting, [{ path: 'desiredQualities.rich', value: 1 }]);
+    expect(roundTwoFrom(comfortingAndRich)).not.toContain('heaviness');
+  });
+
   it('offers the archetype check with generated options when many archetypes are plausible', () => {
     const prefs = applyEffects(emptyPreferences(), [
       { path: 'desiredQualities.comforting', value: 1 },
