@@ -1,6 +1,6 @@
 import { SELF } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
-import type { RecommendResponse, SessionDto } from '../../src/shared/api';
+import type { ApiError, RecommendResponse, SessionDto } from '../../src/shared/api';
 import { testEnv } from './env';
 
 async function post<T>(path: string, body: unknown): Promise<{ status: number; body: T }> {
@@ -93,7 +93,10 @@ describe('POST /api/session/:id/recommend', () => {
     const { status, body } = await post<RecommendResponse>(`/api/session/${id}/recommend`, {});
     expect(status).toBe(200);
     expect(body.primary).toBeNull();
-    expect(body.message).toMatch(/Loosen a restriction/);
+    // A session cannot take more answers from the recommendation screen, so
+    // the copy names the one control there that helps: Start over.
+    expect(body.message).toMatch(/Start over/);
+    expect(body.message).not.toMatch(/loosen/i);
   });
 });
 
@@ -165,7 +168,10 @@ describe('feedback details', () => {
     }
     expect(res.status).toBe(200);
     expect(res.body.primary).toBeNull();
-    const again = await post<RecommendResponse>(`/api/session/${id}/feedback`, { reason: 'too_heavy' });
+    const again = await post<ApiError>(`/api/session/${id}/feedback`, { reason: 'too_heavy' });
     expect(again.status).toBe(409);
+    expect(again.body.error).toBe('no_more_options');
+    expect(again.body.message).toMatch(/Start over/);
+    expect(again.body.message).not.toMatch(/loosen/i);
   });
 });
