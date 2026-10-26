@@ -4,6 +4,13 @@ Non-obvious choices and their trade-offs, dated, newest section first. Read the 
 
 Design-level decisions (free-tier constraints, minimal LLM use, no one-way doors, Google Places terms, D1-only storage) are in the design spec and are not restated here. Task-level rulings made while implementing phase 1 are in [`superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md`](superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md).
 
+## 2026-10-13
+
+| Decision | Reason and trade-off |
+| --- | --- |
+| The runner-up sentence calls a quality a shortfall only when the runner-up's score for it is at least 0.1 below the pick's, and only when every runner-up dish carries the score (protein: every dish has protein tags); otherwise it says "a close second" (score gap up to 0.05) or "the next best fit". Candidate shortfalls are tried in order of how much the diner wanted the quality, protein at its top preference weight, ties by the pick's signal strength and then key. | Scores are coarse estimates, hand-set on fixtures or tagged by the lexicon, so a smaller gap is noise that would read as a claim. A missing score is unknown, not low, the same rule the avoided-quality phrases follow; for a pair with one unscored dish the highest known score is only a lower bound. Ordering by desire names the shortfall the diner cares about rather than the pick's loudest trait. The cost is that some runner-ups get the generic phrase when a reason exists below the threshold or on an unscored dish. |
+| The "Skipped" sentence names a candidate only when its largest phrased penalty, removed on its own, would have put it above the pick. | That is the one case where "skipped because of X" is true of the ranking rather than a guess. A candidate that lost for several reasons together, or on positives, is not named, so the sentence is absent more often than the design's example suggests. |
+
 ## 2026-10-12
 
 | Decision | Reason and trade-off |

@@ -54,7 +54,7 @@ export async function produceRecommendation(deps: Deps, db: D1Database, rec: Ses
     return { recommendationId: null, primary: null, runnerUp: null, message: NO_MATCH_MESSAGE, debug: debugInfo };
   }
 
-  const primary = toDto(result.primary, explain(result.primary, prefs, result.runnerUp), debug);
+  const primary = toDto(result.primary, explain(result.primary, prefs, result.runnerUp, result.ranked), debug);
   const runnerUp = result.runnerUp ? toDto(result.runnerUp, explain(result.runnerUp, prefs), debug) : null;
   const id = crypto.randomUUID();
   await insertRecommendation(db, {
