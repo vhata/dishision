@@ -63,10 +63,6 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
   - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: `src/core/otherText.ts` keywordParse and `test/core/otherText.test.ts`
   - Related: `other-text-exclusions-match-items`
-- [CORE] `vegetarian-marker-wins-over-implied-protein` — **An explicit vegetarian, vegan, veggie or plant-based marker keeps the vegetarian tag and drops the meat proteins the dish name implied.** `lexicon.ts` now strips vegetarian whenever any meat protein is tagged, so "Veggie Burger" tags as beef and "Vegan Fish Tacos" as seafood, and a vegetarian pick can never surface them. No fixture is affected; real menus will be.
-  - Source: independent review of commit 825592c on phase-1-conversation-and-ranking, 2026-10-09
-  - Starting point: `src/core/lexicon.ts` vegetarian rule; only ingredient-level meat words should strip a vegetarian tag that came from ingredient words; derive the meat list from the protein keys rather than a literal
-  - Related: `lexicon-tagging-accuracy`
 - [CORE] `pair-feedback-covers-all-items` — **Feedback on a pair recommendation records the archetype and cuisine of every shown dish, not only the first.** `had_recently` on a pair currently penalises one dish's archetype.
   - Source: independent review of commit 825592c on phase-1-conversation-and-ranking, 2026-10-09
   - Starting point: `src/worker/routes/session.ts` feedback route reads `items[0]` only
@@ -126,3 +122,7 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 - [DOCS] `decisions-formatter-row-stale` — **`docs/DECISIONS.md` no longer says there is no formatter or linter gate.** The row "No formatter or linter gate yet" predates the Biome adoption in PR #9.
   - Source: independent review of PR #19 (bump-vitest-to-five), 2026-10-13
   - Starting point: `docs/DECISIONS.md` gates table; `docs/QUALITY.md` already describes the Biome gates
+- [CORE] `lexicon-meat-cut-words` — **Wings, tenders, nuggets, ribs, drumsticks, gyro and kebab tag meat, with plant guards such as cauliflower wings.** A marked combo like "Veggie Burger and Wings" reads vegetarian-only because these cuts are not meat words, and "Buffalo Wings" tags nothing.
+  - Source: independent review of PR #14 (vegetarian-marker-wins-over-implied-protein), 2026-10-13
+  - Starting point: `kb/lexicon.json` meat entries and their substitute lookbehinds; the cut words need guards for plant versions ("cauliflower wings", "seitan nuggets")
+  - Related: `lexicon-tagging-accuracy`
