@@ -65,11 +65,18 @@ const CUISINE_WORDS: Record<string, string> = {
   hawaiian: 'hawaiian',
   pho: 'vietnamese',
   'banh mi': 'vietnamese',
+  'hot pot': 'chinese',
+  'hot dog': 'american',
+  'hot dogs': 'american',
   ramen: 'japanese',
   sushi: 'japanese',
   tacos: 'mexican',
   burrito: 'mexican',
   curry: 'indian',
+  'thai curry': 'thai',
+  'green curry': 'thai',
+  'red curry': 'thai',
+  'katsu curry': 'japanese',
   pizza: 'italian',
   pasta: 'italian',
   shawarma: 'middle_eastern',
@@ -87,8 +94,22 @@ const PROTEIN_WORDS: [RegExp, ProteinKey, SeafoodKey?][] = [
   [/\b(vegetarian|veggie|tofu|vegan)\b/, 'vegetarian'],
 ];
 
+/** Longest first, so a multi-word dish is claimed before any single word inside it. */
+const DISH_PHRASES = Object.keys(CUISINE_WORDS).sort((a, b) => b.length - a.length);
+const PLURAL = '(?:e?s)?';
+/** The known dish or cuisine a meal phrase starts with, singular or plural, else its first word. */
+function mealName(phrase: string): string {
+  return DISH_PHRASES.find((w) => new RegExp(`^${w}${PLURAL}(?: |$)`).test(phrase)) ?? phrase.split(' ')[0]!;
+}
+/** A planned meal is one word, or two only when they make a known dish such as "hot pot". */
+const MEAL = `(?:${DISH_PHRASES.filter((w) => w.includes(' '))
+  .map((w) => w + PLURAL)
+  .join('|')}|[a-z]+)`;
+const ARTICLE = '(?:(?:a|an|the|some)\\s+)?';
+const WHEN = '(?:later this week|later|tomorrow|this week|(?:on )?(?:mon|tues|wednes|thurs|fri|satur|sun)day)';
+
 const NEGATION = /\b(no|not|skip|without|avoid|don'?t|nothing|none|never)\b/;
-const WORD = (w: string) => new RegExp(`\\b${w}\\b`);
+const WORD = (w: string, flags?: string) => new RegExp(`\\b${w}\\b`, flags);
 
 function set(obj: Record<string, number>, key: string, value: number): void {
   const current = obj[key];
@@ -121,29 +142,34 @@ export function keywordParse(text: string, opts: KeywordParseOptions = {}): Pref
 
   // Meals eaten or planned are handled on the whole text first, then stripped so they are not read as cravings.
   let working = lower;
-  const RECENT = /\b(?:had|ate|got)\s+([a-z]+(?: [a-z]+)?)\b/g;
+  const RECENT = new RegExp(`\\b(?:had|ate|got)\\s+${ARTICLE}([a-z]+(?: [a-z]+)?)\\b`, 'g');
   for (const m of lower.matchAll(RECENT)) {
-    const phrase = m[1]!;
-    const word = Object.keys(CUISINE_WORDS).find((w) => phrase.startsWith(w)) ?? phrase.split(' ')[0]!;
+    const word = mealName(m[1]!);
     push(recent(), word);
     if (CUISINE_WORDS[word]) push(recent(), CUISINE_WORDS[word]!);
     working = working.replace(m[0], ' ');
   }
-  const FUTURE = /\b(?:having|getting|eating|doing)\s+([a-z]+)\s+(?:later|tomorrow|this week|later this week|on \w+day|\w+day)\b/g;
+  // "Today" and "tonight" are this meal, not a later one; "someday" is too vague to count as planned.
+  const FUTURE = new RegExp(`\\b(?:having|getting|eating|doing)\\s+${ARTICLE}(${MEAL})\\s+${WHEN}\\b`, 'g');
   for (const m of lower.matchAll(FUTURE)) {
-    const word = m[1]!;
+    const word = mealName(m[1]!);
     push(future(), CUISINE_WORDS[word] ?? word);
     working = working.replace(m[0], ' ');
   }
 
   for (const rawClause of working.split(/[,.;!?]| but | and | though /)) {
-    const clause = rawClause.trim();
-    if (!clause) continue;
-    const negated = opts.intent === 'avoid' || NEGATION.test(clause);
+    const whole = rawClause.trim();
+    if (!whole) continue;
+    const negated = opts.intent === 'avoid' || NEGATION.test(whole);
     const sign = negated ? -1 : 1;
 
-    for (const [word, key] of Object.entries(CUISINE_WORDS)) {
-      if (!WORD(word).test(clause)) continue;
+    // Dish and cuisine words are blanked out once read, so "hot pot" is not also read as "hot".
+    let clause = whole;
+    for (const word of DISH_PHRASES) {
+      const rest = clause.replace(WORD(word, 'g'), ' ');
+      if (rest === clause) continue;
+      clause = rest;
+      const key = CUISINE_WORDS[word]!;
       if (negated) push(exclusions(), key);
       else set(cuisines(), key, 0.5);
     }
@@ -173,7 +199,8 @@ export function keywordParse(text: string, opts: KeywordParseOptions = {}): Pref
       if (negated && /\bfried\b/.test(clause)) push(exclusions(), 'fried');
     }
     if (/\b(savou?ry|umami|meaty)\b/.test(clause)) set(dq(), 'savory', 0.7 * sign);
-    if (/\b(hands?|handheld|sandwich|wrap|burger)\b/.test(clause)) patch.handheld = clamp1(0.7 * sign);
+    // "hand-pulled" or "hand-cut" describes how a dish is made, not how it is eaten.
+    if (/\b(hand-?held|sandwich|wrap|burger)\b|\bhands?\b(?!-)/.test(clause)) patch.handheld = clamp1(0.7 * sign);
 
     if (/\b(starving|very hungry|really hungry|ravenous)\b/.test(clause)) patch.hunger = 'very_hungry';
     else if (/\b(not (very|that|too) hungry|light dinner|small dinner|snack)\b/.test(clause)) patch.hunger = 'light';
