@@ -68,6 +68,7 @@ Run `pnpm typecheck` then `pnpm test` (expect green), then `pnpm dev` and open t
 4. Start over, exclude every cuisine on the avoid question; expect the "No match." card, not an error.
 5. In round two, "Just decide" produces a recommendation immediately.
 6. Reload on the recommendation screen: the same recommendation returns.
+7. On any question, open Other, type something and tap Skip: the Skip and Continue row becomes "Discard what you typed in Other?" with "Discard and skip" and "Keep editing", and it reads cleanly at phone width as well as desktop. "Keep editing" returns to the text; "Discard and skip" moves to the next question. With Other empty, Skip moves on at once.
 
 Stop the dev server.
 

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import type { AnswerDto, QuestionDto } from '../../shared/api';
 import { ChipGroup, type Intensity } from './ChipGroup';
 import { ScaleInput } from './ScaleInput';
@@ -24,6 +25,10 @@ export function QuestionCard({ question, busy, onSubmit, onSuggest }: Props) {
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [suggestText, setSuggestText] = useState('');
   const [suggested, setSuggested] = useState(false);
+  const [confirmingSkip, setConfirmingSkip] = useState(false);
+  const otherRef = useRef<HTMLTextAreaElement>(null);
+  const keepEditingRef = useRef<HTMLButtonElement>(null);
+  const discardPromptId = useId();
 
   const other = otherText.trim() ? otherText.trim() : undefined;
 
@@ -50,6 +55,24 @@ export function QuestionCard({ question, busy, onSubmit, onSuggest }: Props) {
     question.kind === 'multi'
       ? { kind: 'multi', nodeId: question.nodeId, selections: [] }
       : ({ kind: question.kind, nodeId: question.nodeId } as AnswerDto);
+
+  // Skipping drops whatever is typed in Other, so ask first when there is any.
+  const skip = () => {
+    if (!other) {
+      void onSubmit(skipAnswer());
+      return;
+    }
+    flushSync(() => setConfirmingSkip(true));
+    keepEditingRef.current?.focus();
+  };
+
+  const keepEditing = () => {
+    flushSync(() => {
+      setConfirmingSkip(false);
+      setOtherOpen(true);
+    });
+    otherRef.current?.focus();
+  };
 
   const submitSuggestion = async () => {
     if (suggestText.trim().length < 2) return;
@@ -96,12 +119,17 @@ export function QuestionCard({ question, busy, onSubmit, onSuggest }: Props) {
 
       {otherOpen ? (
         <textarea
+          ref={otherRef}
           className="mt-3 w-full rounded-lg border border-stone-300 p-3 text-sm"
           rows={2}
           maxLength={500}
           placeholder="Say it your way. Example: had pho on Sunday, salmon sounds great."
           value={otherText}
-          onChange={(e) => setOtherText(e.target.value)}
+          onChange={(e) => {
+            setOtherText(e.target.value);
+            // Nothing left to discard, so the skip prompt no longer applies.
+            if (!e.target.value.trim()) setConfirmingSkip(false);
+          }}
         />
       ) : null}
 
@@ -120,19 +148,41 @@ export function QuestionCard({ question, busy, onSubmit, onSuggest }: Props) {
         </div>
       ) : null}
 
-      <div className="mt-6 flex items-center justify-between">
-        <button type="button" className="text-sm text-stone-500 hover:underline" disabled={busy} onClick={() => onSubmit(skipAnswer())}>
-          Skip
-        </button>
-        <button
-          type="button"
-          className="rounded-full bg-amber-600 px-5 py-2 font-medium text-white disabled:opacity-50"
-          disabled={busy}
-          onClick={() => onSubmit(buildAnswer())}
-        >
-          Continue
-        </button>
-      </div>
+      {confirmingSkip ? (
+        <fieldset aria-labelledby={discardPromptId} className="mt-6 flex min-w-0 flex-wrap items-center justify-between gap-3">
+          <p id={discardPromptId} className="text-sm text-stone-600">
+            Discard what you typed in Other?
+          </p>
+          <div className="flex items-center gap-4">
+            <button type="button" className="text-sm text-stone-500 hover:underline" disabled={busy} onClick={() => onSubmit(skipAnswer())}>
+              Discard and skip
+            </button>
+            <button
+              ref={keepEditingRef}
+              type="button"
+              className="rounded-full bg-amber-600 px-5 py-2 font-medium text-white disabled:opacity-50"
+              disabled={busy}
+              onClick={keepEditing}
+            >
+              Keep editing
+            </button>
+          </div>
+        </fieldset>
+      ) : (
+        <div className="mt-6 flex items-center justify-between">
+          <button type="button" className="text-sm text-stone-500 hover:underline" disabled={busy} onClick={skip}>
+            Skip
+          </button>
+          <button
+            type="button"
+            className="rounded-full bg-amber-600 px-5 py-2 font-medium text-white disabled:opacity-50"
+            disabled={busy}
+            onClick={() => onSubmit(buildAnswer())}
+          >
+            Continue
+          </button>
+        </div>
+      )}
     </section>
   );
 }
