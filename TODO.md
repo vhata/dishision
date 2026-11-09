@@ -22,6 +22,11 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 
 ### Unprioritized
 
+- [CORE] `kb-overlay-pattern-backtracking` — **An overlay lexicon pattern cannot hang tagging through catastrophic backtracking.** Load-time validation rejects patterns that fail to compile, but accepts `(a+)+$`, which would stall `tagItem` on a long menu description rather than throw.
+  - Source: review/kb-semantic-validation-on-load, 2026-10-13
+  - Starting point: `src/core/kb/validate.ts` pattern check; options include rejecting nested quantifiers, capping pattern and input length, or a linear-time matcher
+  - Blocked by: overlay rows becoming reachable from a user or admin path; nothing calls mergeKb outside core yet
+
 - [CORE] `kb-cuisine-collides-with-protein` — **A knowledge base cuisine value cannot share a name with a protein key.** An overlay archetype with cuisine `seafood` or `vegetarian` would send that exclusion to cuisine-tag matching instead of ingredient matching once cuisine exclusions match tags only.
   - Source: las-vegas session, re-review of PR #17 (cuisine-exclusion-tag-only), 2026-10-13
   - Starting point: the semantic validator added by `kb-semantic-validation-on-load`; reject cuisine values equal to a protein key
