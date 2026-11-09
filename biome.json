@@ -44,6 +44,31 @@
       "formatter": {
         "enabled": false
       }
+    },
+    {
+      "includes": ["src/core/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noCommonJs": "error",
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/worker", "**/worker/**", "**/client", "**/client/**", "**/providers", "**/providers/**"],
+                    "message": "src/core imports nothing from src/worker, src/client or src/providers (ARCHITECTURE.md invariants)."
+                  },
+                  {
+                    "group": [":PACKAGE:", ":NODE:", ":BUN:", "*:*", "!zod", "!zod/**"],
+                    "message": "src/core may import only zod and its own modules, so it stays free of Worker, DOM, React and provider code and runs under plain node. Extend the allowlist in biome.json only for a pure, runtime-neutral package."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }

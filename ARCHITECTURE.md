@@ -15,7 +15,7 @@ One Cloudflare Worker (Hono API) plus a React SPA served as Workers Static Asset
 - `fixtures/sf.ts`: San Francisco restaurants and menus used by tests and by the fixture candidate source.
 - `migrations/`: D1 schema, applied locally by `pnpm db:migrate` and in Worker tests by `test/worker/apply-migrations.ts`.
 - `test/core`, `test/worker`, `test/client`: the three Vitest projects (node, workerd, jsdom).
-- `scripts/`: gates (`check.sh`, `fmt-check.sh`, `lint.sh`, `typecheck.sh`, `test.sh`, `build.sh`, `setup.sh`).
+- `scripts/`: gates (`check.sh`, `fmt-check.sh`, `lint.sh`, `typecheck.sh`, `test.sh`, `build.sh`, `setup.sh`) and the Vitest reporter `test.sh` uses to count tests per project (`vitest-project-counts.ts`).
 - `docket/`: the vendored docket workflow (contract, guides, scripts), never edited here; see `docket/README.md`.
 
 ## Shared interfaces
@@ -33,7 +33,7 @@ Changes here land before dependent work starts, or are stacked explicitly.
 
 Codebase reviews check changed code against this list; add an entry when the same class of problem appears twice.
 
-- `src/core/` imports nothing from `src/worker/`, `src/client/`, `src/providers/`, Hono, React or Cloudflare types. It is testable under plain node.
+- `src/core/` imports nothing from `src/worker/`, `src/client/`, `src/providers/`, Hono, React or Cloudflare types. It is testable under plain node. The lint gate enforces the import side: packages other than `zod` and paths into those directories are rejected by the `src/core/**` override in `biome.json`.
 - Knowledge base content lives in `kb/*.json`. Code never hardcodes a question, archetype or lexicon entry; it reads them through the loader.
 - The final ranking is deterministic: the same candidates and preferences produce the same primary, runner-up and trace. No LLM output picks or reorders recommendations. LLM output, where it exists at all, is cacheable data upstream of ranking.
 - Explanations use only menu item names, descriptions and prices, restaurant names, and attribute words from the scoring trace. They never invent ingredients and never claim a quality the diner asked to avoid.
