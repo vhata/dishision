@@ -22,7 +22,6 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
   - Findings: `vegetarian-choice-allows-meat`
   - Starting point: `src/core/scoring.ts` hardFilterReason and `src/core/pairs.ts` composePair; add a scenario through the real question sequence
   - Acceptance: the recorded eight-answer sequence returns only vegetarian items for primary and runner-up; verify pair members and menu-less candidates
-  - Related: `vegetarian-marker-wins-over-implied-protein`
 - [CORE] `score-positive-carb-answers` — **Positive rice, noodles, bread and tortilla preferences affect item and archetype ranking.** All four choices currently leave the entire scored fixture and archetype lists unchanged despite existing carb tags.
   - Source: review/2026-10-24-0249-full.md, 2026-10-24
   - Findings: `positive-carb-preferences-ignored`
