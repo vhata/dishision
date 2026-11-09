@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { coarsenPoint } from '../../shared/location';
 
 interface Props {
   busy: boolean;
@@ -14,7 +15,7 @@ export function Landing({ busy, error, onStart }: Props) {
   const useLocation = () => {
     if (!navigator.geolocation) return setGeoError('Location is not available in this browser.');
     navigator.geolocation.getCurrentPosition(
-      (pos) => onStart({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (pos) => onStart(coarsenPoint({ lat: pos.coords.latitude, lng: pos.coords.longitude })),
       () => setGeoError('Could not read your location. A ZIP code works too.'),
     );
   };

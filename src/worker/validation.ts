@@ -1,9 +1,12 @@
 import { z } from 'zod';
 import { FEEDBACK_REASONS } from '../core/feedback';
+import { coarsenPoint } from '../shared/location';
 
+// A device fix is coarsened here, at the parse boundary, so no route ever
+// holds the raw coordinates; the client coarsens too, as defence in depth.
 export const CreateSessionSchema = z.union([
   z.object({ zip: z.string().regex(/^\d{5}$/, 'ZIP must be five digits') }),
-  z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }),
+  z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }).transform(coarsenPoint),
 ]);
 
 const otherText = z.string().trim().max(500).optional();

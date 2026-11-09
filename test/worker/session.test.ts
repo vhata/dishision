@@ -35,6 +35,14 @@ describe('POST /api/session', () => {
     expect(res.status).toBe(201);
   });
 
+  it('stores a coarse point, never the raw device fix', async () => {
+    const res = await post('/api/session', { lat: 37.761234567, lng: -122.414812345 });
+    expect(res.status).toBe(201);
+    const { id } = await res.json<SessionDto>();
+    const row = await testEnv.DB.prepare('SELECT lat, lng FROM sessions WHERE id = ?1').bind(id).first<{ lat: number; lng: number }>();
+    expect(row).toEqual({ lat: 37.76, lng: -122.41 });
+  });
+
   it('rejects malformed input', async () => {
     expect((await post('/api/session', { zip: '9411' })).status).toBe(400);
     expect((await post('/api/session', { lat: 100, lng: 0 })).status).toBe(400);

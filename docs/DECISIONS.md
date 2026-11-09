@@ -4,6 +4,12 @@ Non-obvious choices and their trade-offs, dated, newest section first. Read the 
 
 Design-level decisions (free-tier constraints, minimal LLM use, no one-way doors, Google Places terms, D1-only storage) are in the design spec and are not restated here. Task-level rulings made while implementing phase 1 are in [`superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md`](superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md).
 
+## 2026-10-13
+
+| Decision | Reason and trade-off |
+| --- | --- |
+| A device location fix is rounded to two decimal places (`COARSE_COORD_DECIMALS` in `src/shared/location.ts`), inside the `CreateSessionSchema` Zod transform, with the client rounding the same way before sending. | Two places is about 1.1 km north-south: neighbourhood-sized, too coarse to locate a home, and well inside the ~5 km search bias, so recommendations are unaffected. Resolving the fix to a ZIP centroid would match the spec's wording exactly but needs a reverse geocoder, which phase 1 does not have and which would be an external call per session later. Rounding in the schema rather than the route means no handler ever holds the raw value; the client copy is defence in depth, not the guarantee. ZIP centroids from the geocoder are stored as returned. |
+
 ## 2026-10-12
 
 | Decision | Reason and trade-off |

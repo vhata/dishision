@@ -10,7 +10,7 @@ One Cloudflare Worker (Hono API) plus a React SPA served as Workers Static Asset
 - `kb/`: the knowledge base as versioned JSON: `questions.json`, `archetypes.json`, `lexicon.json`. Content lives here, not in code.
 - `src/providers/`: seams and their fixture implementations: `types.ts` (interfaces), `llm/fixture.ts`, `candidates/fixture.ts`, `geocoder/fixture.ts`.
 - `src/worker/`: Hono app (`index.ts`), env bindings (`env.ts`), provider selection (`deps.ts`), request validation, D1 access (`db/`), session routes (`routes/session.ts`), "Other" text parsing through the `Llm` seam (`other.ts`), recommendation production (`recommendation.ts`) and order links (`links.ts`).
-- `src/shared/`: DTOs shared by the Worker and the client (`api.ts`).
+- `src/shared/`: DTOs shared by the Worker and the client (`api.ts`), and the coarse-location grid both apply to a device fix (`location.ts`).
 - `src/client/`: React SPA. Screens (`Landing`, `Conversation`, `Recommendation`), components (`ChipGroup`, `ScaleInput`, `QuestionCard`, `RecommendationCard`, `DebugDrawer`), API client.
 - `fixtures/sf.ts`: San Francisco restaurants and menus used by tests and by the fixture candidate source.
 - `migrations/`: D1 schema, applied locally by `pnpm db:migrate` and in Worker tests by `test/worker/apply-migrations.ts`.
@@ -37,7 +37,7 @@ Codebase reviews check changed code against this list; add an entry when the sam
 - Knowledge base content lives in `kb/*.json`. Code never hardcodes a question, archetype or lexicon entry; it reads them through the loader.
 - The final ranking is deterministic: the same candidates and preferences produce the same primary, runner-up and trace. No LLM output picks or reorders recommendations. LLM output, where it exists at all, is cacheable data upstream of ranking.
 - Explanations use only menu item names, descriptions and prices, restaurant names, and attribute words from the scoring trace. They never invent ingredients and never claim a quality the diner asked to avoid.
-- Sessions store a ZIP label and a centroid only, never a street address. `sessions.owner_id` is nullable and unused; there is no account concept.
+- Sessions store a ZIP label and a centroid only, never a street address. A device location fix is snapped to the `COARSE_COORD_DECIMALS` grid in `src/shared/location.ts` by `CreateSessionSchema` before any route sees it (the client snaps it too); a raw fix is never stored. `sessions.owner_id` is nullable and unused; there is no account concept.
 - Request bodies are validated with Zod before any D1 write; invalid input returns 400, not a 500 or a row with bad data.
 - Worker code stays within the free plan: no KV, Queues or Durable Objects; never loop over external calls inside one request.
 - Copy is confident and concise, with no emoji and no "AI assistant" phrasing. "Make a dishision." is the one pun.
