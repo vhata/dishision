@@ -76,7 +76,10 @@
     "prompt": "How heavy should it be?",
     "field": "heaviness",
     "stops": ["Light", "On the lighter side", "Middle", "Substantial", "Properly heavy"],
-    "applies": [{ "path": "desiredQualities.rich", "op": "unset" }]
+    "applies": [{ "all": [
+      { "path": "desiredQualities.comforting", "op": "set" },
+      { "path": "desiredQualities.rich", "op": "unset" }
+    ] }]
   },
   {
     "id": "beef_style", "kind": "multi", "round": 2, "priority": 80,
