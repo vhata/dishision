@@ -22,7 +22,6 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
   - Findings: `vegetarian-choice-allows-meat`
   - Starting point: `src/core/scoring.ts` hardFilterReason and `src/core/pairs.ts` composePair; add a scenario through the real question sequence
   - Acceptance: the recorded eight-answer sequence returns only vegetarian items for primary and runner-up; verify pair members and menu-less candidates
-  - Related: `vegetarian-marker-wins-over-implied-protein`
 - [CORE] `score-positive-carb-answers` — **Positive rice, noodles, bread and tortilla preferences affect item and archetype ranking.** All four choices currently leave the entire scored fixture and archetype lists unchanged despite existing carb tags.
   - Source: review/2026-10-24-0249-full.md, 2026-10-24
   - Findings: `positive-carb-preferences-ignored`
@@ -102,7 +101,6 @@ Only work promoted from whole-codebase reviews belongs here. Every entry is read
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `lexicon-portion-side-marker`, `lexicon-specific-merge-order`, `lexicon-word-false-positives`
   - Starting point: `src/core/lexicon.ts` tagItem merge; `kb/lexicon.json` portion, spicy, chicken and bread entries
-  - Related: `vegetarian-marker-wins-over-implied-protein`
 - [CLIENT] `client-error-and-state-polish` — **Client error messages, suggestion feedback, hidden Other text and session restore behave as the user expects.** Six small defects in one area: stale geolocation errors, raw error codes, thanks on failure, hidden text still sent, fragile hash restore, no retry after a failed recommend.
   - Source: review/2026-10-09-0901-full.md, 2026-10-09
   - Findings: `stale-geo-error-masks-server-error`, `raw-error-codes-in-copy`, `suggestion-failure-still-thanks`, `hidden-other-text-still-submitted`, `hash-restore-fragile`, `recommend-error-has-no-retry`
