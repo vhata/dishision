@@ -7,7 +7,7 @@ import type { SessionRecord } from './db/sessions';
 import type { Deps } from './deps';
 import { orderLinks } from './links';
 
-export const NO_MATCH_MESSAGE = 'Nothing nearby fits everything you ruled out. Loosen a restriction and try again.';
+export const NO_MATCH_MESSAGE = 'Nothing nearby fits everything you ruled out. Start over and rule out less.';
 
 function toDto(rec: Recommendation, explanation: string, debug: boolean): RecommendationDto {
   return {

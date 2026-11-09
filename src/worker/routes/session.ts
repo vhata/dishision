@@ -147,7 +147,7 @@ sessionRoutes.post('/:id/feedback', async (c) => {
   const latest = await latestRecommendation(c.env.DB, rec.id);
   if (!latest) return c.json({ error: 'nothing_to_reject', message: 'Ask for a recommendation first.' }, 409);
   if (latest.feedbackReason) {
-    return c.json({ error: 'no_more_options', message: 'Nothing else fits. Loosen a restriction or start over.' }, 409);
+    return c.json({ error: 'no_more_options', message: 'Nothing else fits. Start over to try again.' }, 409);
   }
 
   await setFeedback(c.env.DB, latest.id, parsed.data.reason);
