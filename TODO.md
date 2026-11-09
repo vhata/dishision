@@ -25,7 +25,6 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 - [CORE] `kb-cuisine-collides-with-protein` — **A knowledge base cuisine value cannot share a name with a protein key.** An overlay archetype with cuisine `seafood` or `vegetarian` would send that exclusion to cuisine-tag matching instead of ingredient matching once cuisine exclusions match tags only.
   - Source: las-vegas session, re-review of PR #17 (cuisine-exclusion-tag-only), 2026-10-13
   - Starting point: the semantic validator added by `kb-semantic-validation-on-load`; reject cuisine values equal to a protein key
-  - Related: `cuisine-exclusion-tag-only`
 - [KB] `heaviness-asked-when-already-set` — **Decide whether the heaviness question is skipped when heaviness is already known.** With feel "comforting" and "nothing heavy" typed in the avoid question, heaviness is already -0.7 and round two still asks "How heavy should it be?", whose answer overwrites it; the spec's rule (comforting set, rich unset) does not mention heaviness.
   - Source: independent review of PR #13 (heaviness-node-applies-condition), 2026-10-13
   - Starting point: `kb/questions.json` heaviness node `applies`; design spec round-two list
@@ -55,10 +54,6 @@ Ordinary follow-ups and bugs found during other work live here. Whole-codebase r
 
 ### P2 Normal
 
-- [CORE] `cuisine-exclusion-tag-only` — **Cuisine exclusions match cuisine tags only, not description words or substrings.** Excluding "chinese" currently drops Pad See Ew because its description says "Chinese broccoli", and `isExcluded` substring matching makes "fish" exclude "shellfish". Excluding "american" likewise drops any dish whose description mentions American cheese.
-  - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
-  - Starting point: `src/core/scoring.ts` hardFilterReason and `src/core/planner.ts` isExcluded; keep description scanning for ingredient exclusions
-  - Related: `other-text-exclusions-match-items`
 - [CORE] `other-text-keyword-false-positives` — **The "Other" keyword parser stops reading "hot pot" as spicy, "hand-pulled noodles" as handheld, and "had a burger" as recentMeals ["a"].** Articles must be stripped and multi-word dishes matched before single words. The future-meal pattern's `\w+day` also matches "today", so "eating light today" records futureMeals ["light"] and loses the wish for something light.
   - Source: phase-1 final review (deferred minor), docs/superpowers/plans/2026-10-08-dishision-phase-1-execution-log.md, 2026-10-08
   - Starting point: `src/core/otherText.ts` keywordParse and `test/core/otherText.test.ts`

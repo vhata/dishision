@@ -28,10 +28,37 @@ export function cuisineAffinity(prefs: DinnerPreferences, cuisine: string | unde
   return prefs.cuisines[cuisine] ?? 0;
 }
 
-export function isExcluded(prefs: DinnerPreferences, words: readonly (string | undefined)[]): boolean {
+const cuisineCache = new WeakMap<KnowledgeBase, ReadonlySet<string>>();
+
+/** Every cuisine an archetype or lexicon entry is tagged with; an exclusion in this set is a cuisine exclusion. */
+export function knownCuisines(kb: KnowledgeBase): ReadonlySet<string> {
+  let set = cuisineCache.get(kb);
+  if (!set) {
+    set = new Set([...kb.archetypes.map((a) => a.cuisine), ...kb.lexicon.flatMap((e) => (e.cuisine ? [e.cuisine] : []))]);
+    cuisineCache.set(kb, set);
+  }
+  return set;
+}
+
+export interface ExclusionTarget {
+  /** The dish's and restaurant's cuisine tags. */
+  cuisines: readonly (string | undefined)[];
+  /** Words and other tags that non-cuisine exclusions are matched against. */
+  text: readonly (string | undefined)[];
+}
+
+/**
+ * A cuisine exclusion (one in `cuisines`) matches a cuisine tag exactly, so "chinese" does not drop
+ * a dish described with Chinese broccoli. Any other exclusion is a substring match over the tags and
+ * text, so "fish" also drops shellfish, catfish and swordfish: over-excluding costs one dish, while
+ * missing a ruled-out ingredient can serve an allergen.
+ */
+export function isExcluded(prefs: DinnerPreferences, target: ExclusionTarget, cuisines: ReadonlySet<string>): boolean {
   if (prefs.exclusions.length === 0) return false;
-  const lowered = words.filter((w): w is string => !!w).map((w) => w.toLowerCase());
-  return prefs.exclusions.some((ex) => lowered.some((w) => w === ex || w.includes(ex)));
+  const lower = (ws: readonly (string | undefined)[]) => ws.filter((w): w is string => !!w).map((w) => w.toLowerCase());
+  const tags = lower(target.cuisines);
+  const words = [...tags, ...lower(target.text)];
+  return prefs.exclusions.some((ex) => (cuisines.has(ex) ? tags.includes(ex) : words.some((w) => w.includes(ex))));
 }
 
 export interface RankedArchetype {
@@ -42,8 +69,8 @@ export interface RankedArchetype {
 
 export const ARCHETYPE_WEIGHTS = { align: 0.6, protein: 0.25, cuisine: 0.15, liked: 0.3, carbAvoid: 0.2 } as const;
 
-export function scoreArchetype(a: Archetype, prefs: DinnerPreferences): RankedArchetype | null {
-  if (isExcluded(prefs, [a.cuisine, a.id, a.label, ...a.proteins, ...a.formats])) return null;
+export function scoreArchetype(a: Archetype, prefs: DinnerPreferences, cuisines: ReadonlySet<string>): RankedArchetype | null {
+  if (isExcluded(prefs, { cuisines: [a.cuisine], text: [a.id, a.label, ...a.proteins, ...a.formats] }, cuisines)) return null;
   const align = alignQualities(desiredVector(prefs), a.scores);
   const protein = proteinMatch(prefs, a.proteins);
   const cuisine = (cuisineAffinity(prefs, a.cuisine) + 1) / 2;
@@ -61,8 +88,9 @@ export function scoreArchetype(a: Archetype, prefs: DinnerPreferences): RankedAr
 }
 
 export function rankArchetypes(kb: KnowledgeBase, prefs: DinnerPreferences): RankedArchetype[] {
+  const cuisines = knownCuisines(kb);
   return kb.archetypes
-    .map((a) => scoreArchetype(a, prefs))
+    .map((a) => scoreArchetype(a, prefs, cuisines))
     .filter((r): r is RankedArchetype => r !== null)
     .sort((x, y) => y.score - x.score);
 }
